@@ -27,7 +27,7 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 Some examples are available for various problems. For some of them, the DOGS implementation is state-of-the-art.
 
 - The sequential ordering problem (SOP) [git repository](https://github.com/librallu/dogs-sop), [reference paper](https://www.researchgate.net/publication/343267812_Tree_search_for_the_Sequential_Ordering_Problem)
-- The permutation flowshop (makespan and flowtime minimization) TODO
+- The permutation flowshop (makespan and flowtime minimization) [git repository](https://github.com/librallu/dogs-pfsp), [reference paper](https://www.researchgate.net/publication/344219325_Iterative_beam_search_algorithms_for_the_permutation_flowshop)
 
 
 ## Some helpful tips

@@ -10,7 +10,7 @@ use serde_json::json;
 extern crate human_format;
 
 use crate::metriclogger::{Metric, MetricLogger};
-use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, PartialChildrenExpansion};
+use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, PartialChildrenExpansion, ParetoDominanceSpace};
 
 
 /// search statistics data (at a given time)
@@ -327,4 +327,15 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
         };
     }
 
+}
+
+
+impl<N,Tree,B> ParetoDominanceSpace<N> for StatTsDecorator<Tree, B>
+where 
+    Tree: ParetoDominanceSpace<N>,
+    B: Serialize,
+{
+    fn dominates(&self, a:&N, b:&N) -> bool {
+        return self.s.dominates(a,b);
+    }
 }

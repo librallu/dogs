@@ -6,7 +6,7 @@ use std::cmp::max;
 use serde::{Serialize};
 
 use crate::metriclogger::{Metric, MetricLogger};
-use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree};
+use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree, ParetoDominanceSpace, PartialChildrenExpansion};
 
 
 pub trait LifetimeEventListener<B> {
@@ -318,3 +318,31 @@ where
 }
 
 
+impl<N,Tree,B> ParetoDominanceSpace<N> for BoundingDecorator<Tree, B>
+where Tree: ParetoDominanceSpace<N>,
+{
+    fn dominates(&self, a:&N, b:&N) -> bool {
+        return self.s.dominates(a,b);
+    }
+}
+
+impl<N,Tree,B> PartialChildrenExpansion<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Tree, B>
+where
+    Tree: PartialChildrenExpansion<N>+SearchTree<N, B>,
+    B: Ord+Copy+Into<i64>+Display
+{
+    fn get_next_child(&mut self, node: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Option<LifetimeEventNode<N, B, BoundSet<B>>> {
+        match self.s.get_next_child(&mut node.node) {
+            None => { node.expanded = true; return None; }
+            Some(c) => {
+                let bound = self.s.bound(&c);
+                return Some(LifetimeEventNode {
+                    node: c,
+                    bound: bound,
+                    lifetime_listener: self.bound_set.clone(),
+                    expanded: false,
+                });
+            }
+        }
+    }
+}

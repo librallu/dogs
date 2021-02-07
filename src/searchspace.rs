@@ -112,3 +112,13 @@ pub trait PrefixEquivalenceTree<N, B, PE> {
      */
     fn prefix_bound(&self, n: &N) -> B;
 }
+
+/**
+ * Represents a search space where nodes can pareto-dominate some other.
+ */
+pub trait ParetoDominanceSpace<N> {
+    /**
+     * returns true if a dominates b
+     */
+    fn dominates(&self, a:&N, b:&N) -> bool;
+}

@@ -1,4 +1,4 @@
-use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion};
+use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, ParetoDominanceSpace, PartialChildrenExpansion};
 
 pub struct PruningDecorator<Tree, B> {
     s: Tree,
@@ -96,6 +96,7 @@ where
                         res.push(child);
                     }
                 }
+                // res.reverse();
                 self.nb_prunings += children_size as u64 - res.len() as u64;
                 return res;
             }
@@ -124,5 +125,41 @@ where
 
     fn prefix_bound(&self, n: &N) -> B {
         return self.s.prefix_bound(n);
+    }
+}
+
+
+impl<N,Tree,B> ParetoDominanceSpace<N> for PruningDecorator<Tree, B>
+where Tree: ParetoDominanceSpace<N>
+{
+    fn dominates(&self, a:&N, b:&N) -> bool {
+        return self.s.dominates(a,b);
+    }
+}
+
+
+impl<N, Tree, B> PartialChildrenExpansion<N> for PruningDecorator<Tree,B>
+where 
+    Tree: PartialChildrenExpansion<N>+SearchTree<N,B>,
+    B: PartialOrd+Copy,
+{
+    fn get_next_child(&mut self, node: &mut N) -> Option<N> {
+        match self.s.get_next_child(node) {
+            None => { return None; },
+            Some(c) => {
+                match self.best_val {
+                    None => { return Some(c); }
+                    Some(best_v) => {
+                        if self.s.bound(&c) < best_v {
+                            return Some(c);
+                        } else {
+                            self.nb_prunings += 1;
+                            return self.get_next_child(node);
+                        }
+                    }
+                }
+                
+            }
+        }
     }
 }

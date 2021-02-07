@@ -66,7 +66,7 @@ impl<Tree, N:Clone, B: PartialOrd + Display + Copy> IterativeBeamSearch<'_, Tree
             ts.run(stopping_criterion);
             ts.manager.give_best(&mut self.manager);
             // gets best
-            d = ((d as f64) * self.growth) as usize;
+            d = ((d as f64) * self.growth).ceil() as usize;
             if ! ts.is_heuristic_pruning_done() {
                 self.heuristic_pruning_done = false;
                 break

@@ -1,4 +1,4 @@
-use std::cmp::PartialOrd;
+use std::cmp::{PartialOrd};
 use std::time::{Duration, SystemTime};
 
 

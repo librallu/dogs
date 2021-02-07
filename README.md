@@ -12,6 +12,7 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 - [X] DFS
 - [X] Iterative Beam Search
 - [X] LDS
+- [X] PartialChildrenExpansion (Iterative) Beam Search
 
 ### combinators
 

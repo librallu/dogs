@@ -7,7 +7,7 @@ use fxhash::FxHashMap;
 
 extern crate human_format;
 
-use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion};
+use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, ParetoDominanceSpace, PartialChildrenExpansion};
 
 struct DominanceInfo<B> {
     val: B,
@@ -141,6 +141,59 @@ impl<Tree, PE, B> PEDominanceTsDecorator<Tree, PE, B> {
             nb_prunings: 0,
             nb_gets: 0,
             nb_updates: 0,
+        }
+    }
+}
+
+impl<N,Tree,PE,B> ParetoDominanceSpace<N> for PEDominanceTsDecorator<Tree, PE, B>
+where Tree: ParetoDominanceSpace<N>
+{
+    fn dominates(&self, a:&N, b:&N) -> bool {
+        return self.s.dominates(a,b);
+    }
+}
+
+impl<N,Tree,PE,B> PartialChildrenExpansion<N> for PEDominanceTsDecorator<Tree, PE, B>
+where
+    Tree: PartialChildrenExpansion<N>+PrefixEquivalenceTree<N, B, PE>,
+    PE: Eq + Hash,
+    B: PartialOrd
+{
+    fn get_next_child(&mut self, node: &mut N) -> Option<N> {
+        match self.s.get_next_child(node) {
+            None => { return None; },
+            Some(c) => {
+                // checks if c is dominated
+                let pe = self.s.get_pe(&c);
+                let prefix_bound = self.s.prefix_bound(&c);
+                self.nb_gets += 1;
+                match self.store.entry(pe) {
+                    Entry::Occupied(o) => {
+                        // if the prefix equivalence exists in the database
+                        let info = o.into_mut();
+                        if info.val < prefix_bound
+                            || (info.val == prefix_bound && info.iter == self.current_iter)
+                        {
+                            self.nb_prunings += 1;
+                            return self.get_next_child(node); // if node dominated, try another one
+                        } else {
+                            // otherwise, add it to the database (update)
+                            info.val = prefix_bound;
+                            info.iter = self.current_iter;
+                            self.nb_updates += 1;
+                            return Some(c)
+                        }
+                    }
+                    Entry::Vacant(v) => {
+                        // otherwise, add it to the database (new entry)
+                        v.insert(DominanceInfo {
+                            val: prefix_bound,
+                            iter: self.current_iter,
+                        });
+                        return Some(c);
+                    }
+                }
+            }
         }
     }
 }

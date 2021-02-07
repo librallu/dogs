@@ -1,4 +1,4 @@
-use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree};
+use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree, ParetoDominanceSpace, PartialChildrenExpansion};
 use crate::treesearch::decorators::helper::discrepancy::{DiscrepancyNode, DiscrepancyType};
 use std::marker::PhantomData;
 
@@ -120,5 +120,23 @@ where
 
     fn prefix_bound(&self, n: &DiscrepancyNode<N>) -> B {
         return self.s.prefix_bound(&n.node);
+    }
+}
+
+impl<N,Tree,D,G,B> ParetoDominanceSpace<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
+where Tree: ParetoDominanceSpace<N>
+{
+    fn dominates(&self, a:&DiscrepancyNode<N>, b:&DiscrepancyNode<N>) -> bool {
+        return self.s.dominates(&a.node,&b.node);
+    }
+}
+
+
+impl<N,Tree,D,G,B> PartialChildrenExpansion<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
+where
+    Tree: PartialChildrenExpansion<N>
+{
+    fn get_next_child(&mut self, _node: &mut DiscrepancyNode<N>) -> Option<DiscrepancyNode<N>> {
+        panic!("not implemented");
     }
 }

@@ -5,7 +5,7 @@ use std::cmp::Ordering;
  */
 pub struct GuidedNode<N, G:Ord> {
     pub node: N,
-    guide: G,
+    pub guide: G,
 }
 
 impl<N, G:Ord> GuidedNode<N, G> {

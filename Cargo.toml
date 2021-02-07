@@ -1,6 +1,6 @@
 [package]
 name = "dogs"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["luc libralesso <libralesso.l@gmail.com>"]
 edition = "2018"
 

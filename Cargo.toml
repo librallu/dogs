@@ -3,6 +3,9 @@ name = "dogs"
 version = "1.1.0"
 authors = ["luc libralesso <libralesso.l@gmail.com>"]
 edition = "2018"
+description = "Discrete Optimization Global Search framework. Implements various search algorithms that can be found in combinatorial optimization or heuristic search."
+license = "MIT"
+keywords = ["combinatorial", "optimization", "search", "heuristic"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

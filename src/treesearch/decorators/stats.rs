@@ -122,7 +122,9 @@ where
         json["nb_generated"] = serde_json::json!(self.stats.generated);
         json["nb_expanded"] = serde_json::json!(self.stats.expanded);
         json["nb_trashed"] = serde_json::json!(self.stats.trashed);
-        json["avg_branching_factor"] = serde_json::json!((self.stats.generated as f64) / (self.stats.expanded as f64));
+        if self.stats.expanded > 0 {
+            json["avg_branching_factor"] = serde_json::json!((self.stats.generated as f64) / (self.stats.expanded as f64));
+        }
         json["nb_eval"] = serde_json::json!(self.stats.eval);
         json["nb_guide"] = serde_json::json!(self.stats.guide);
         json["time_searched"] = serde_json::json!(time);
@@ -151,11 +153,13 @@ where
             "nb trashed",
             format(self.stats.trashed as f64)
         );
-        println!(
-            "{:>25}{:>15.3}",
-            "avg branching factor",
-            format((self.stats.generated as f64) / (self.stats.expanded as f64))
-        );
+        if self.stats.expanded > 0 {
+            println!(
+                "{:>25}{:>15.3}",
+                "avg branching factor",
+                format((self.stats.generated as f64) / (self.stats.expanded as f64))
+            );
+        }
         println!("{:>25}{:>15}", "nb eval", format(self.stats.eval as f64));
         println!("{:>25}{:>15}", "nb guide", format(self.stats.guide as f64));
         println!("{:>25}{:>15.3}", "time searched (s)", time);

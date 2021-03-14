@@ -65,7 +65,7 @@ where
 
     fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC) {
         let mut d = self.dinit;
-        while !stopping_criterion.is_finished() {
+        while !stopping_criterion.is_finished() && !self.is_optimal() {
             self.space.borrow_mut().restart(format!("Iter D={}", d));
             // updates logger and display statistics
             if let Some(logger) = self.logger.upgrade() {

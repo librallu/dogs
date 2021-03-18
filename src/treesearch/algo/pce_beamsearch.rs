@@ -59,7 +59,6 @@ where
         self.heuristic_pruning_done = false;
         beam.push(GuidedNode::new(root, g_root));
         // for each level of the tree
-        let mut i = 0;
         while !stopping_criterion.is_finished() && !beam.is_empty() {
             let mut next_beam = MinMaxHeap::with_capacity(self.d);
             while !beam.is_empty() && !stopping_criterion.is_finished() {

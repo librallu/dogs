@@ -1,14 +1,11 @@
 use std::cmp::{Ord, PartialOrd};
 use std::marker::PhantomData;
-use std::fmt::Display;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::searchmanager::SearchManager;
 use crate::searchspace::{SearchSpace, GuidedSpace, SearchTree, PartialChildrenExpansion};
 use crate::searchalgorithm::{SearchAlgorithm, StoppingCriterion};
-
-use crate::treesearch::algo::helper::guided_node::GuidedNode;
 
 pub struct PCEGreedy<N, B, G, Sol, Tree> {
     pub manager: SearchManager<N, B>,

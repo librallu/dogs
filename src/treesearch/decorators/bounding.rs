@@ -336,6 +336,7 @@ where
             None => { node.expanded = true; return None; }
             Some(c) => {
                 let bound = self.s.bound(&c);
+                self.insert_bound(&bound);
                 return Some(LifetimeEventNode {
                     node: c,
                     bound: bound,

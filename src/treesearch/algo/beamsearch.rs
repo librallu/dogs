@@ -32,10 +32,6 @@ impl<N:Clone, B:PartialOrd+Copy, G, Sol, Tree> BeamSearch<N, B, G, Sol, Tree> {
             sol: PhantomData,
         }
     }
-
-    pub fn is_heuristic_pruning_done(&self) -> bool {
-        return self.heuristic_pruning_done;
-    }
 }
 
 

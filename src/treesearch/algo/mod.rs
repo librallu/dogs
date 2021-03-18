@@ -5,3 +5,4 @@ pub mod dfs;
 pub mod bestfirst;
 pub mod beamsearch_dom;
 pub mod pce_beamsearch;
+pub mod pce_greedy;

@@ -9,19 +9,84 @@ extern crate human_format;
 
 use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, ParetoDominanceSpace, PartialChildrenExpansion};
 
-struct DominanceInfo<B> {
+pub struct DominanceInfo<B> {
     val: B,
     iter: u32,
 }
 
+pub struct DominanceStore<PE, B> {
+    name: String,
+    store: FxHashMap<PE, DominanceInfo<B>>,
+    nb_gets: usize,
+    nb_dominations: usize,
+    nb_updates: usize,
+}
+
+impl<PE, B> DominanceStore<PE, B> where PE:Eq+Hash, B:PartialOrd {
+    pub fn new(name:String) -> Self {
+        Self {
+            name: name,
+            store: FxHashMap::default(),
+            nb_gets: 0,
+            nb_dominations: 0,
+            nb_updates: 0
+        }
+    }
+
+    pub fn is_dominated_or_add(&mut self, pe:PE, b:B, iter:u32) -> bool {
+        self.nb_gets += 1;
+        match self.store.entry(pe) {
+            Entry::Occupied(o) => {
+                // if the prefix equivalence exists in the database
+                let info = o.into_mut();
+                if info.val < b
+                    || (info.val == b && info.iter == iter)
+                {
+                    self.nb_dominations += 1;
+                    return true; // if node dominated
+                } else {
+                    // otherwise, add it to the database (update)
+                    info.val = b;
+                    info.iter = iter;
+                    self.nb_updates += 1;
+                    return false;
+                }
+            }
+            Entry::Vacant(v) => {
+                // otherwise, add it to the database (new entry)
+                v.insert(DominanceInfo {
+                    val: b,
+                    iter: iter,
+                });
+                return false;
+            }
+        }
+    }
+
+    pub fn display_statistics(&self) {
+        let format = |e| human_format::Formatter::new().with_decimals(1).format(e);
+        println!("{} dominances:", self.name);
+        println!("{:>25}{:>15}", "nb elts", format(self.store.len() as f64));
+        println!("{:>25}{:>15}", "nb gets", format(self.nb_gets as f64));
+        println!("{:>25}{:>15}", "nb pruned", format(self.nb_dominations as f64));
+        println!("{:>25}{:>15}", "nb updates", format(self.nb_updates as f64));
+    }
+
+    pub fn export_statistics(&self, json:&mut serde_json::Value) {
+        json["pe_nb_elts"] = serde_json::json!(self.store.len());
+        json["pe_nb_gets"] = serde_json::json!(self.nb_gets);
+        json["pe_nb_pruned"] = serde_json::json!(self.nb_dominations);
+        json["pe_nb_updates"] = serde_json::json!(self.nb_updates);
+    }
+}
+
+
+
 /// Prefix Equivalence Dominance Decorator
 pub struct PEDominanceTsDecorator<Tree, PE, B> {
     s: Tree,
-    store: FxHashMap<PE, DominanceInfo<B>>,
     current_iter: u32,
-    nb_prunings: u64,
-    nb_gets: u64,
-    nb_updates: u64,
+    store: DominanceStore<PE, B>,
 }
 
 impl<N,G,Tree,PE,B> GuidedSpace<N,G> for PEDominanceTsDecorator<Tree, PE, B>
@@ -33,7 +98,7 @@ where Tree:GuidedSpace<N,G>
 }
 
 impl<N,Sol,Tree,PE,B> SearchSpace<N,Sol> for PEDominanceTsDecorator<Tree, PE, B>
-where Tree:SearchSpace<N,Sol>, B:serde::Serialize
+where Tree:SearchSpace<N,Sol>, B:serde::Serialize+PartialOrd, PE:Hash+Eq
 {
     fn solution(&mut self, node: &N) -> Sol {
         return self.s.solution(node);
@@ -53,20 +118,13 @@ where Tree:SearchSpace<N,Sol>, B:serde::Serialize
     }
 
     fn display_statistics(&self) {
-        let format = |e| human_format::Formatter::new().with_decimals(1).format(e);
-        println!("{:>25}{:>15}", "nb elts", format(self.store.len() as f64));
-        println!("{:>25}{:>15}", "nb gets", format(self.nb_gets as f64));
-        println!("{:>25}{:>15}", "nb pruned", format(self.nb_prunings as f64));
-        println!("{:>25}{:>15}", "nb updates", format(self.nb_updates as f64));
+        self.store.display_statistics();
         println!();
         self.s.display_statistics();
     }
 
     fn export_statistics(&self, json:&mut serde_json::Value) {
-        json["pe_nb_elts"] = serde_json::json!(self.store.len());
-        json["pe_nb_gets"] = serde_json::json!(self.nb_gets);
-        json["pe_nb_pruned"] = serde_json::json!(self.nb_prunings);
-        json["pe_nb_updates"] = serde_json::json!(self.nb_updates);
+        self.store.export_statistics(json);
         self.s.export_statistics(json);
     }
 }
@@ -80,33 +138,11 @@ where
     fn children(&mut self, node: &mut N) -> Vec<N> {
         // check if current node is dominated, otherwise, return children of underlying node
         let pe = self.s.get_pe(node);
-        let prefix_bound = self.s.prefix_bound(node);
-        self.nb_gets += 1;
-        match self.store.entry(pe) {
-            Entry::Occupied(o) => {
-                // if the prefix equivalence exists in the database
-                let info = o.into_mut();
-                if info.val < prefix_bound
-                    || (info.val == prefix_bound && info.iter == self.current_iter)
-                {
-                    self.nb_prunings += 1;
-                    return Vec::new(); // if node dominated
-                } else {
-                    // otherwise, add it to the database (update)
-                    info.val = prefix_bound;
-                    info.iter = self.current_iter;
-                    self.nb_updates += 1;
-                    return self.s.children(node);
-                }
-            }
-            Entry::Vacant(v) => {
-                // otherwise, add it to the database (new entry)
-                v.insert(DominanceInfo {
-                    val: prefix_bound,
-                    iter: self.current_iter,
-                });
-                return self.s.children(node);
-            }
+        let bound = self.s.prefix_bound(node);
+        if self.store.is_dominated_or_add(pe, bound, self.current_iter) {
+            return Vec::new();
+        } else {
+            return self.s.children(node);
         }
     }
 }
@@ -128,19 +164,16 @@ where
     }
 }
 
-impl<Tree, PE, B> PEDominanceTsDecorator<Tree, PE, B> {
+impl<Tree, PE, B> PEDominanceTsDecorator<Tree, PE, B> where PE:Hash+Eq, B:PartialOrd {
     pub fn unwrap(&self) -> &Tree {
         return &self.s;
     }
 
-    pub fn new(s: Tree) -> PEDominanceTsDecorator<Tree, PE, B> {
-        PEDominanceTsDecorator {
+    pub fn new(s: Tree) -> Self {
+        Self {
             s: s,
-            store: FxHashMap::default(),
+            store: DominanceStore::new("".to_string()),
             current_iter: 0,
-            nb_prunings: 0,
-            nb_gets: 0,
-            nb_updates: 0,
         }
     }
 }
@@ -166,32 +199,10 @@ where
                 // checks if c is dominated
                 let pe = self.s.get_pe(&c);
                 let prefix_bound = self.s.prefix_bound(&c);
-                self.nb_gets += 1;
-                match self.store.entry(pe) {
-                    Entry::Occupied(o) => {
-                        // if the prefix equivalence exists in the database
-                        let info = o.into_mut();
-                        if info.val < prefix_bound
-                            || (info.val == prefix_bound && info.iter == self.current_iter)
-                        {
-                            self.nb_prunings += 1;
-                            return self.get_next_child(node); // if node dominated, try another one
-                        } else {
-                            // otherwise, add it to the database (update)
-                            info.val = prefix_bound;
-                            info.iter = self.current_iter;
-                            self.nb_updates += 1;
-                            return Some(c)
-                        }
-                    }
-                    Entry::Vacant(v) => {
-                        // otherwise, add it to the database (new entry)
-                        v.insert(DominanceInfo {
-                            val: prefix_bound,
-                            iter: self.current_iter,
-                        });
-                        return Some(c);
-                    }
+                if self.store.is_dominated_or_add(pe, prefix_bound, self.current_iter) {
+                    return self.get_next_child(node); // if node dominated, try another one
+                } else {
+                    return Some(c);
                 }
             }
         }

@@ -313,7 +313,6 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
     }
 
     pub fn get_pareto_diagram(&self) -> serde_json::Value {
-        let mut res = json!({});
         let mut points:Vec<serde_json::Value> = vec![];
         for e in &self.perfprofile {
             let mut tmp = json!({
@@ -333,8 +332,7 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
             };
             points.push(tmp);
         }
-        res["stats_pareto"] = json!(points);
-        res
+        json!(points)
     }
 
 }

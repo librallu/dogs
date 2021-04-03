@@ -16,7 +16,7 @@ def main(instances_list, prefix, suffix):
     for e in l:
         with open(e, 'r') as f:
             data = json.load(f)
-            res.append(data["points"][-1]["v"])
+            res.append(data["stats_pareto"][-1]["v"])
     for i in range(len(names)):
         print("{},{}".format(names[i],res[i]))
 

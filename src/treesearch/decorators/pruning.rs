@@ -25,8 +25,8 @@ where Tree:SearchSpace<N,Sol>, B:serde::Serialize
         self.s.restart(msg);
     }
 
-    fn handle_new_best(&mut self, n: &N) {
-        self.s.handle_new_best(n);
+    fn handle_new_best(&mut self, n: N) -> N {
+        self.s.handle_new_best(n)
     }
 
     fn stop_search(&mut self, _msg: String) {

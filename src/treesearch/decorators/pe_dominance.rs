@@ -9,11 +9,14 @@ extern crate human_format;
 
 use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, ParetoDominanceSpace, PartialChildrenExpansion};
 
+
+#[derive(Debug)]
 pub struct DominanceInfo<B> {
     val: B,
     iter: u32,
 }
 
+#[derive(Debug)]
 pub struct DominanceStore<PE, B> {
     name: String,
     store: FxHashMap<PE, DominanceInfo<B>>,
@@ -109,8 +112,8 @@ where Tree:SearchSpace<N,Sol>, B:serde::Serialize+PartialOrd, PE:Hash+Eq
         self.s.restart(msg);
     }
 
-    fn handle_new_best(&mut self, n: &N) {
-        self.s.handle_new_best(n);
+    fn handle_new_best(&mut self, n: N) -> N {
+        self.s.handle_new_best(n)
     }
 
     fn stop_search(&mut self, _msg: String) {

@@ -1,10 +1,14 @@
+// directories
+pub mod treesearch;
+pub mod genetic;
+pub mod datastructures;
+
+// files
 pub mod searchalgorithm;
 pub mod searchmanager;
 pub mod searchspace;
 pub mod metriclogger;
 
-pub mod treesearch;
-pub mod genetic;
 
 #[cfg(test)]
 mod tests {

@@ -56,8 +56,11 @@ where Tree:SearchSpace<N,Sol>
         self.s.restart(msg);
     }
 
-    fn handle_new_best(&mut self, n: &DiscrepancyNode<N>) {
-        self.s.handle_new_best(&n.node);
+    fn handle_new_best(&mut self, n: DiscrepancyNode<N>) -> DiscrepancyNode<N> {
+        DiscrepancyNode {
+            node: self.s.handle_new_best(n.node),
+            discrepancies: n.discrepancies
+        }
     }
 
     fn stop_search(&mut self, _msg: String) {

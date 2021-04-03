@@ -43,8 +43,8 @@ where
                 // compare with best
                 let v = space.bound(&n);
                 if self.manager.is_better(v) {
-                    space.handle_new_best(&n);
-                    self.manager.update_best(n.clone(), v);
+                    let n2 = space.handle_new_best(n);
+                    self.manager.update_best(n2.clone(), space.bound(&n2));
                 }
                 break;
             }

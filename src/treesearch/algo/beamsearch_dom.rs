@@ -56,8 +56,9 @@ impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
                     // compare with best
                     let v = self.space.bound(&n);
                     if self.manager.is_better(v) {
-                        self.space.handle_new_best(&n);
-                        self.manager.update_best(n, v);
+                        let n2 = self.space.handle_new_best(n);
+                        let b2 = self.space.bound(&n2);
+                        self.manager.update_best(n2, b2);
                     }
                     continue;
                 }
@@ -69,8 +70,9 @@ impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
                         // compare with best
                         let v = self.space.bound(&c);
                         if self.manager.is_better(v) {
-                            self.space.handle_new_best(&c);
-                            self.manager.update_best(c, v);
+                            let c2 = self.space.handle_new_best(c);
+                            let b2 = self.space.bound(&c2);
+                            self.manager.update_best(c2, b2);
                         }
                         continue;
                     }

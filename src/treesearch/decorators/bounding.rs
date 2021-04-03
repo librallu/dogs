@@ -179,6 +179,7 @@ where Tree:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
 
 impl<N,Sol,Tree,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Tree, B>
 where
+    N:Clone,
     Tree:SearchSpace<N,Sol>,
     B:Display+Ord+Copy+Into<i64>+Serialize,
     // C:LifetimeEventListener<B>
@@ -194,8 +195,13 @@ where
         self.s.restart(msg);
     }
 
-    fn handle_new_best(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) {
-        self.s.handle_new_best(&n.node);
+    fn handle_new_best(&mut self, n: LifetimeEventNode<N, B, BoundSet<B>>) -> LifetimeEventNode<N, B, BoundSet<B>> {
+        LifetimeEventNode {
+            node: self.s.handle_new_best(n.node.clone()),
+            bound: n.bound,
+            lifetime_listener: n.lifetime_listener.clone(),
+            expanded: n.expanded,
+        }
     }
 
     fn stop_search(&mut self, _msg: String) {

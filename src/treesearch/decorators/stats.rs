@@ -86,9 +86,10 @@ where
         self.s.restart(msg);
     }
 
-    fn handle_new_best(&mut self, n: &N) {
+    fn handle_new_best(&mut self, n: N) -> N {
+        // update before handle best
+        let obj = self.s.bound(&n);
         self.nb_sols += 1;
-        let obj = self.s.bound(n);
         self.perfprofile.push(PerfProfileEntry {
             p: self.stats.clone(),
             t: self.t_start.elapsed().unwrap().as_secs_f32(),
@@ -101,7 +102,23 @@ where
                 logger.request_logging();
             }
         }
-        self.s.handle_new_best(n);
+        // call the handle new best (possibly improve the solution)
+        let n2 = self.s.handle_new_best(n);
+        self.nb_sols += 1;
+        let obj = self.s.bound(&n2);
+        self.perfprofile.push(PerfProfileEntry {
+            p: self.stats.clone(),
+            t: self.t_start.elapsed().unwrap().as_secs_f32(),
+            v: Some(obj.clone())
+        });
+        // updates logger and display statistics
+        if let Some(logger) = self.logger.upgrade() {
+            if let Some(id) = self.logging_id_obj {
+                logger.update_metric(id, Metric::Int(obj.into()));
+                logger.request_logging();
+            }
+        }
+        return n2;
     }
 
     /// adds factice point when the search stops

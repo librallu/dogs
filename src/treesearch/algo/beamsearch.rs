@@ -61,8 +61,9 @@ where
                     // compare with best
                     let v = space.bound(&n);
                     if self.manager.is_better(v) {
-                        space.handle_new_best(&n);
-                        self.manager.update_best(n, v);
+                        let n2 = space.handle_new_best(n);
+                        let b2 = space.bound(&n2);
+                        self.manager.update_best(n2, b2);
                     }
                     continue;
                 }
@@ -74,8 +75,9 @@ where
                         // compare with best
                         let v = space.bound(&c);
                         if self.manager.is_better(v) {
-                            space.handle_new_best(&c);
-                            self.manager.update_best(c, v);
+                            let c2 = space.handle_new_best(c);
+                            let b2 = space.bound(&c2);
+                            self.manager.update_best(c2, b2);
                         }
                         continue;
                     }

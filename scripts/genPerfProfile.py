@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+"""
+takes a list of perfprofiles and x,y values to display
+"""
+
+
 import sys
 import json
 import matplotlib.pyplot as plt

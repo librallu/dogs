@@ -7,7 +7,7 @@ pub trait SearchSpace<N,Sol> {
     /**
      * called when the algorithm finds a new-best-known solution
      */
-    fn handle_new_best(&mut self, _node: &N) {}
+    fn handle_new_best(&mut self, node: N) -> N { node }
 
         // RESTARTING INFORMATION
     /**
@@ -122,3 +122,29 @@ pub trait ParetoDominanceSpace<N> {
      */
     fn dominates(&self, a:&N, b:&N) -> bool;
 }
+
+
+/**
+ * Represents a neighborhood
+ */
+pub trait NeighborhoodSpace<N> {
+    /**
+     * returns the next neighbor if it exists
+     */
+    fn next_neighbor(&self, n:&mut N) -> Option<N>;
+
+    /**
+     * returns all neighbors
+     */
+    fn neighbors(&self, n:&mut N) -> Vec<N> {
+        let mut res = Vec::new();
+        loop {
+            match self.next_neighbor(n) {
+                None => { return res; }
+                Some(e) => { res.push(e); }
+            }
+        }
+    }
+}
+
+

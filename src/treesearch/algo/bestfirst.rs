@@ -31,8 +31,9 @@ impl<'a, Tree, N:Clone, B: PartialOrd + Copy> BestFirst<'a, Tree, N, B> {
                 // compare with best
                 let v = self.space.bound(&n);
                 if self.manager.is_better(v) {
-                    self.space.handle_new_best(&n);
-                    self.manager.update_best(n, v);
+                    let n2 = self.space.handle_new_best(n);
+                    let b2 = self.space.bound(&n2);
+                    self.manager.update_best(n2, b2);
                 }
             } else {
                 // if not, add all its children

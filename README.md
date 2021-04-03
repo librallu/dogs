@@ -7,20 +7,21 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 
 ### tree search algorithms
 
+- [X] Partial Expansion Greedy algorithm
 - [X] Beam Search
 - [X] Best First Search
-- [X] DFS
+- [X] Depth first Search
 - [X] Iterative Beam Search
-- [X] LDS
-- [X] PartialChildrenExpansion (Iterative) Beam Search
+- [X] Limited Discrepancy Search
+- [X] Partial Expansion (Iterative) Beam Search
 
-### combinators
+### decorators
 
-- [X] Bounding combinator
-- [X] LDS combinator
-- [X] PrefixEquivalence dominance combinator
-- [X] Pruning combinator
-- [X] Statistics combinator
+- [X] Bounding decorator: measures dual bounds
+- [X] LDS decorator: limits the exploration of the tree to the nodes with few discrepancies
+- [X] PrefixEquivalence dominance decorator: implements prefix equivalence dominances
+- [X] Pruning combinator: prunes nodes that are dominated by the best-known solution
+- [X] Statistics combinator: reports various statistics of the search
 
 
 ## examples

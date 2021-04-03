@@ -1,8 +1,5 @@
 use std::cell::RefCell;
 use std::time::{SystemTime};
-use crate::searchspace::SearchSpace;
-use std::io::{Write};
-use std::fs::File;
 
 extern crate human_format;
 
@@ -135,21 +132,4 @@ impl MetricLogger {
         println!("");
         println!("{}",("-".repeat(size)));
     }
-
-    /**
-     * Exports json output to a file from the search space
-     */
-    pub fn export_json_stats<Space,N,Sol>(space:&Space, filename:String) where Space:SearchSpace<N,Sol> {
-        let mut json = serde_json::json!({});
-        space.export_statistics(&mut json);
-        let mut file = match File::create(&filename) {
-            Err(why) => panic!("couldn't create {}: {}", &filename, why),
-            Ok(file) => file
-        };
-        match file.write(serde_json::to_string(&json).unwrap().as_bytes()) {
-            Err(why) => panic!("couldn't write: {}",why),
-            Ok(_) => {}
-        };
-    }
-
 }

@@ -1,7 +1,5 @@
 use std::fmt::{Display, Debug};
 use std::time::{SystemTime};
-use std::io::{Write};
-use std::fs::File;
 use std::rc::{Weak};
 
 use serde::Serialize;
@@ -314,13 +312,8 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
         return self;
     }
 
-    pub fn export_performance_profile(&self, filename:&str, title:&str) {
-        let mut file = match File::create(filename) {
-            Err(why) => panic!("couldn't create {}: {}", filename, why),
-            Ok(file) => file
-        };
+    pub fn get_pareto_diagram(&self) -> serde_json::Value {
         let mut res = json!({});
-        res["title"] = json!(title);
         let mut points:Vec<serde_json::Value> = vec![];
         for e in &self.perfprofile {
             let mut tmp = json!({
@@ -340,12 +333,8 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
             };
             points.push(tmp);
         }
-        res["points"] = json!(points);
-        match file.write(serde_json::to_string(&res)
-        .unwrap().as_bytes()) {
-            Err(why) => panic!("couldn't write: {}",why),
-            Ok(_) => {}
-        };
+        res["stats_pareto"] = json!(points);
+        res
     }
 
 }

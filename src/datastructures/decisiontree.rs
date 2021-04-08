@@ -7,8 +7,8 @@ Using this data-structure works great on large instances and large branching fac
 */
 #[derive(Debug)]
 pub struct DecisionTree<D> {
-    d:D,
-    parent:Option<Rc<DecisionTree<D>>>,
+    pub d:D,
+    pub parent:Option<Rc<DecisionTree<D>>>,
 }
 
 impl<D> DecisionTree<D> where D:Clone {

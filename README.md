@@ -47,3 +47,11 @@ debug = true
 ```
 5. ```cargo flamegraph ARGUMENTS```. For instance (SOP): ```cargo flamegraph insts/R.700.1000.15.sop 30```
 6. visualize the flamegraph (here by using firefox): ```firefox flamegraph.svg```
+
+
+
+### iterating over files (linux)
+
+```bash
+for f in `ls DIRNAME/*`; do COMMAND "${f}"; done
+```

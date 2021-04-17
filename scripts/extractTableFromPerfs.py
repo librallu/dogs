@@ -10,7 +10,7 @@ def main(instances_list, prefix, suffix):
     # read instance list
     l = []
     with open(instances_list, "r") as f:
-        names = list(map(lambda e:e.replace("\n","").replace("TA","TA_"), f.readlines()))
+        names = list(map(lambda e:e.replace("\n",""), f.readlines()))
     l = list(map(lambda e:prefix+e+suffix, names))
     res = []
     for e in l:

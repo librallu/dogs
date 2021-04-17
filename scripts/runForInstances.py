@@ -2,11 +2,12 @@
 """
 executes a command for each instance (typically an optimization program)
 for instance:
-    ../dogs/scripts/runForInstances.py insts/taillard_flowtime.csv insts/ 'tsp ./target/release/dogs-pfsp -p "results/f_flowtime_alpha/#N.json" -s "results/f_flowtime_alpha/#N.sol" -i "insts/Taillard/tai200_10_5.txt" -t #T f_flowtime -g alpha'
+../dogs/scripts/runForInstances.py insts/taillard_flowtime.csv insts/ 'tsp ./target/release/dogs-pfsp -p "results/f_flowtime_alpha/#N.json" -s "results/f_flowtime_alpha/#N.sol" -i "insts/#P" -t #T f_flowtime -g alpha'
 """
 
 from sys import argv
 import csv
+import os
 
 if __name__ == "__main__":
     if len(argv) < 3:
@@ -28,7 +29,7 @@ if __name__ == "__main__":
             inst_path = row["path"]
             inst_name = inst_path.split("/")[-1]
             c = command.replace("#P", inst_path).replace("#N", inst_name).replace("#T", timelimit)
-            print(c)
+            os.system(c)
 
 
     

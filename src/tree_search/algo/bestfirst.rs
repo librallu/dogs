@@ -1,9 +1,9 @@
 use std::collections::BinaryHeap;
 use std::cmp::Reverse;
 
-use crate::searchmanager::SearchManager;
-use crate::searchspace::{SearchSpace, GuidedSpace, SearchTree, TotalChildrenExpansion};
-use crate::treesearch::algo::helper::guided_node::GuidedNode;
+use crate::search_manager::SearchManager;
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
+use crate::tree_search::algo::helper::guided_node::GuidedNode;
 
 pub struct BestFirst<'a, Tree, N, B> {
     pub manager: SearchManager<N, B>,
@@ -18,10 +18,10 @@ impl<'a, Tree, N:Clone, B: PartialOrd + Copy> BestFirst<'a, Tree, N, B> {
         }
     }
 
-    pub fn run<S, G>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
-    where Tree: SearchSpace<N,S>+GuidedSpace<N,G>+SearchTree<N, B>+TotalChildrenExpansion<N>, G: Ord {
+    pub fn run<G>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
+    where Tree: SearchSpace<N,B>+GuidedSpace<N,G>+TotalNeighborGeneration<N>, G: Ord {
         let mut pq = BinaryHeap::new();
-        let root = self.space.root();
+        let root = self.space.initial();
         let g_root = self.space.guide(&root);
         pq.push(Reverse(GuidedNode::new(root, g_root)));
         while stopping_criterion(&self.manager) && !pq.is_empty() {
@@ -32,17 +32,17 @@ impl<'a, Tree, N:Clone, B: PartialOrd + Copy> BestFirst<'a, Tree, N, B> {
                 let v = self.space.bound(&n);
                 if self.manager.is_better(v) {
                     let n2 = self.space.handle_new_best(n);
+                    n = n2.clone();
                     let b2 = self.space.bound(&n2);
                     self.manager.update_best(n2, b2);
                 }
-            } else {
-                // if not, add all its children
-                let mut children = self.space.children(&mut n);
-                while !children.is_empty() {
-                    let c = children.pop().unwrap();
-                    let g_c = self.space.guide(&c);
-                    pq.push(Reverse(GuidedNode::new(c, g_c)));
-                }
+            }
+            // if not, add all its children
+            let mut children = self.space.neighbors(&mut n);
+            while !children.is_empty() {
+                let c = children.pop().unwrap();
+                let g_c = self.space.guide(&c);
+                pq.push(Reverse(GuidedNode::new(c, g_c)));
             }
         }
         self.space.stop_search("".to_string());

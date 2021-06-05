@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 
-use crate::searchmanager::SearchManager;
-use crate::searchspace::{SearchSpace, GuidedSpace, SearchTree, TotalChildrenExpansion};
+use crate::search_manager::SearchManager;
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 
 pub struct DFS<'a, Tree, N, B> {
     pub manager: SearchManager<N, B>,
@@ -16,13 +16,13 @@ impl<'a, Tree, N:Clone, B: PartialOrd + Copy> DFS<'a, Tree, N, B> {
         }
     }
 
-    pub fn run<S, G>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
+    pub fn run<G>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
     where
-        Tree: SearchSpace<N,S>+GuidedSpace<N,G>+SearchTree<N, B>+TotalChildrenExpansion<N>,
+        Tree: SearchSpace<N,B>+GuidedSpace<N,G>+TotalNeighborGeneration<N>,
         G: Ord
     {
         let mut stack = LinkedList::new();
-        stack.push_back(self.space.root());
+        stack.push_back(self.space.initial());
         while stopping_criterion(&self.manager) && !stack.is_empty() {
             let mut n = stack.pop_front().unwrap();
             // check if goal
@@ -31,16 +31,16 @@ impl<'a, Tree, N:Clone, B: PartialOrd + Copy> DFS<'a, Tree, N, B> {
                 let v = self.space.bound(&n);
                 if self.manager.is_better(v) {
                     let n2 = self.space.handle_new_best(n);
+                    n = n2.clone();
                     let b2 = self.space.bound(&n2);
                     self.manager.update_best(n2, b2);
                 }
-            } else {
-                // if not, add all its children
-                let mut children = self.space.children(&mut n);
-                children.sort_by_key(|e| self.space.guide(e));
-                while !children.is_empty() {
-                    stack.push_front(children.pop().unwrap());
-                }
+            }
+            // if not, add all its children
+            let mut children = self.space.neighbors(&mut n);
+            children.sort_by_key(|e| self.space.guide(e));
+            while !children.is_empty() {
+                stack.push_front(children.pop().unwrap());
             }
         }
         self.space.stop_search("".to_string());

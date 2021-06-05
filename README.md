@@ -24,6 +24,10 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 - [X] Statistics combinator: reports various statistics of the search
 
 
+### TODO
+
+- [ ] replace display_statistics by a function that displays statistics from export_stats (json format)
+
 ## examples
 
 Some examples are available for various problems. For some of them, the DOGS implementation is state-of-the-art.

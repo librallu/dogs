@@ -1,6 +1,6 @@
 pub mod helper;
 
-pub mod pe_dominance;
+pub mod gcost_dominance;
 pub mod stats;
 pub mod lds;
 pub mod pruning;

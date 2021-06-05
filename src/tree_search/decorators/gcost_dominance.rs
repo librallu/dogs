@@ -7,7 +7,7 @@ use fxhash::FxHashMap;
 
 extern crate human_format;
 
-use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, ParetoDominanceSpace, PartialChildrenExpansion};
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 
 
 #[derive(Debug)]
@@ -17,15 +17,15 @@ pub struct DominanceInfo<B> {
 }
 
 #[derive(Debug)]
-pub struct DominanceStore<PE, B> {
+pub struct DominanceStore<Id, B> {
     name: String,
-    store: FxHashMap<PE, DominanceInfo<B>>,
+    store: FxHashMap<Id, DominanceInfo<B>>,
     nb_gets: usize,
     nb_dominations: usize,
     nb_updates: usize,
 }
 
-impl<PE, B> DominanceStore<PE, B> where PE:Eq+Hash, B:PartialOrd {
+impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
     pub fn new(name:String) -> Self {
         Self {
             name: name,
@@ -36,7 +36,7 @@ impl<PE, B> DominanceStore<PE, B> where PE:Eq+Hash, B:PartialOrd {
         }
     }
 
-    pub fn is_dominated_or_add(&mut self, pe:PE, b:B, iter:u32) -> bool {
+    pub fn is_dominated_or_add(&mut self, pe:Id, b:B, iter:u32) -> bool {
         self.nb_gets += 1;
         match self.store.entry(pe) {
             Entry::Occupied(o) => {
@@ -86,25 +86,44 @@ impl<PE, B> DominanceStore<PE, B> where PE:Eq+Hash, B:PartialOrd {
 
 
 /// Prefix Equivalence Dominance Decorator
-pub struct PEDominanceTsDecorator<Tree, PE, B> {
-    s: Tree,
+pub struct GcostDominanceTsDecorator<Space, Id, B> {
+    s: Space,
     current_iter: u32,
-    store: DominanceStore<PE, B>,
+    store: DominanceStore<Id, B>,
 }
 
-impl<N,G,Tree,PE,B> GuidedSpace<N,G> for PEDominanceTsDecorator<Tree, PE, B>
-where Tree:GuidedSpace<N,G>
+impl<N,G,Space,Id,B> GuidedSpace<N,G> for GcostDominanceTsDecorator<Space, Id, B>
+where Space:GuidedSpace<N,G>
 {
     fn guide(&mut self, n: &N) -> G {
         return self.s.guide(n);
     }
 }
 
-impl<N,Sol,Tree,PE,B> SearchSpace<N,Sol> for PEDominanceTsDecorator<Tree, PE, B>
-where Tree:SearchSpace<N,Sol>, B:serde::Serialize+PartialOrd, PE:Hash+Eq
-{
+impl<N,Sol,Space,Id,B> ToSolution<N,Sol> for GcostDominanceTsDecorator<Space, Id, B>
+where Space:ToSolution<N,Sol> {
     fn solution(&mut self, node: &N) -> Sol {
         return self.s.solution(node);
+    }
+}
+
+impl<N,Space,Id,B> SearchSpace<N,B> for GcostDominanceTsDecorator<Space, Id, B>
+where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd, Id:Hash+Eq
+{
+    fn initial(&mut self) -> N {
+        return self.s.initial();
+    }
+
+    fn bound(&mut self, node: &N) -> B {
+        return self.s.bound(node);
+    }
+
+    fn g_cost(&mut self, node: &N) -> B {
+        return self.s.g_cost(node);
+    }
+
+    fn goal(&mut self, node: &N) -> bool {
+        return self.s.goal(node);
     }
 
     fn restart(&mut self, msg: String) {
@@ -132,47 +151,31 @@ where Tree:SearchSpace<N,Sol>, B:serde::Serialize+PartialOrd, PE:Hash+Eq
     }
 }
 
-impl<N, Tree, PE, B> TotalChildrenExpansion<N> for PEDominanceTsDecorator<Tree, PE, B>
+impl<N, Space, Id, B> TotalNeighborGeneration<N> for GcostDominanceTsDecorator<Space, Id, B>
 where 
-    Tree: TotalChildrenExpansion<N>+PrefixEquivalenceTree<N, B, PE>,
-    PE: Eq + Hash,
+    Space: TotalNeighborGeneration<N>+Identifiable<N, Id>+SearchSpace<N,B>,
+    Id: Eq + Hash,
     B: PartialOrd
 {
-    fn children(&mut self, node: &mut N) -> Vec<N> {
-        // check if current node is dominated, otherwise, return children of underlying node
-        let pe = self.s.get_pe(node);
-        let bound = self.s.prefix_bound(node);
+    fn neighbors(&mut self, node: &mut N) -> Vec<N> {
+        // check if current node is dominated, otherwise, return neighbors of underlying node
+        let pe = self.s.id(node);
+        let bound = self.s.g_cost(node);
         if self.store.is_dominated_or_add(pe, bound, self.current_iter) {
             return Vec::new();
         } else {
-            return self.s.children(node);
+            return self.s.neighbors(node);
         }
     }
 }
 
-impl<N, B, Tree, PE> SearchTree<N, B> for PEDominanceTsDecorator<Tree, PE, B>
-where
-    Tree: SearchTree<N, B>,
-{
-    fn root(&mut self) -> N {
-        return self.s.root();
-    }
 
-    fn bound(&mut self, node: &N) -> B {
-        return self.s.bound(node);
-    }
-
-    fn goal(&mut self, node: &N) -> bool {
-        return self.s.goal(node);
-    }
-}
-
-impl<Tree, PE, B> PEDominanceTsDecorator<Tree, PE, B> where PE:Hash+Eq, B:PartialOrd {
-    pub fn unwrap(&self) -> &Tree {
+impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:PartialOrd {
+    pub fn unwrap(&self) -> &Space {
         return &self.s;
     }
 
-    pub fn new(s: Tree) -> Self {
+    pub fn new(s: Space) -> Self {
         Self {
             s: s,
             store: DominanceStore::new("".to_string()),
@@ -181,29 +184,29 @@ impl<Tree, PE, B> PEDominanceTsDecorator<Tree, PE, B> where PE:Hash+Eq, B:Partia
     }
 }
 
-impl<N,Tree,PE,B> ParetoDominanceSpace<N> for PEDominanceTsDecorator<Tree, PE, B>
-where Tree: ParetoDominanceSpace<N>
+impl<N,Space,Id,B> ParetoDominanceSpace<N> for GcostDominanceTsDecorator<Space, Id, B>
+where Space: ParetoDominanceSpace<N>
 {
     fn dominates(&self, a:&N, b:&N) -> bool {
         return self.s.dominates(a,b);
     }
 }
 
-impl<N,Tree,PE,B> PartialChildrenExpansion<N> for PEDominanceTsDecorator<Tree, PE, B>
+impl<N,Space,Id,B> PartialNeighborGeneration<N> for GcostDominanceTsDecorator<Space, Id, B>
 where
-    Tree: PartialChildrenExpansion<N>+PrefixEquivalenceTree<N, B, PE>,
-    PE: Eq + Hash,
+    Space: PartialNeighborGeneration<N>+Identifiable<N, Id>+SearchSpace<N,B>,
+    Id: Eq + Hash,
     B: PartialOrd
 {
-    fn get_next_child(&mut self, node: &mut N) -> Option<N> {
-        match self.s.get_next_child(node) {
+    fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
+        match self.s.next_neighbor(node) {
             None => { return None; },
             Some(c) => {
                 // checks if c is dominated
-                let pe = self.s.get_pe(&c);
-                let prefix_bound = self.s.prefix_bound(&c);
-                if self.store.is_dominated_or_add(pe, prefix_bound, self.current_iter) {
-                    return self.get_next_child(node); // if node dominated, try another one
+                let id = self.s.id(&c);
+                let prefix_bound = self.s.g_cost(&c);
+                if self.store.is_dominated_or_add(id, prefix_bound, self.current_iter) {
+                    return self.next_neighbor(node); // if node dominated, try another one
                 } else {
                     return Some(c);
                 }

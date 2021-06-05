@@ -7,8 +7,8 @@ use serde_json::json;
 
 extern crate human_format;
 
-use crate::metriclogger::{Metric, MetricLogger};
-use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, SearchTree, TotalChildrenExpansion, PartialChildrenExpansion, ParetoDominanceSpace};
+use crate::metric_logger::{Metric, MetricLogger};
+use crate::search_space::{SearchSpace, GuidedSpace, Identifiable, TotalNeighborGeneration, PartialNeighborGeneration, ParetoDominanceSpace, ToSolution};
 
 
 /// search statistics data (at a given time)
@@ -16,7 +16,7 @@ use crate::searchspace::{SearchSpace, GuidedSpace, PrefixEquivalenceTree, Search
 pub struct PerfProfilePoint {
     expanded: u64,
     generated: u64,
-    root: u64,
+    initial: u64,
     eval: u64,
     goals: u64,
     trashed: u64,
@@ -38,7 +38,7 @@ impl PerfProfilePoint {
         PerfProfilePoint {
             expanded: 0,
             generated: 0,
-            root: 0,
+            initial: 0,
             eval: 0,
             goals: 0,
             trashed: 0,
@@ -70,14 +70,42 @@ where
     }
 }
 
-impl<N,Sol,Tree,B> SearchSpace<N,Sol> for StatTsDecorator<Tree,B>
+
+impl<N,Sol,Space,B> ToSolution<N,Sol> for StatTsDecorator<Space, B>
+where Space:ToSolution<N,Sol>, B:serde::Serialize {
+    fn solution(&mut self, node: &N) -> Sol {
+        return self.s.solution(node);
+    }
+}
+
+
+impl<N,Tree,B> SearchSpace<N,B> for StatTsDecorator<Tree,B>
 where 
-    Tree: SearchSpace<N,Sol>+SearchTree<N,B>,
+    Tree: SearchSpace<N,B>,
     B: Clone+Serialize+Into<i64>
 {
-    fn solution(&mut self, node: &N) -> Sol {
-        self.stats.solutions += 1;
-        return self.s.solution(node);
+
+    fn initial(&mut self) -> N {
+        self.stats.initial += 1;
+        return self.s.initial();
+    }
+
+    fn bound(&mut self, node: &N) -> B {
+        self.stats.eval += 1;
+        return self.s.bound(node);
+    }
+
+    /**
+     * TODO maybe have a g_cost stat?
+     */
+    fn g_cost(&mut self, node: &N) -> B {
+        self.stats.eval += 1;
+        return self.s.g_cost(node);
+    }
+
+    fn goal(&mut self, node: &N) -> bool {
+        self.stats.goals += 1;
+        return self.s.goal(node);
     }
 
     fn restart(&mut self, msg: String) {
@@ -192,36 +220,14 @@ where
 }
 
 
-impl<'a, N, B, Tree> SearchTree<N, B> for StatTsDecorator<Tree, B>
-where
-    B: Display+Debug+Copy+Serialize,
-    Tree: SearchTree<N, B>+TotalChildrenExpansion<N>,
-{
-    fn root(&mut self) -> N {
-        self.stats.root += 1;
-        return self.s.root();
-    }
-
-    fn bound(&mut self, node: &N) -> B {
-        self.stats.eval += 1;
-        return self.s.bound(node);
-    }
-
-    fn goal(&mut self, node: &N) -> bool {
-        self.stats.goals += 1;
-        return self.s.goal(node);
-    }
-}
-
-
-impl<N, Tree, B> TotalChildrenExpansion<N> for StatTsDecorator<Tree,B>
+impl<N, Tree, B> TotalNeighborGeneration<N> for StatTsDecorator<Tree,B>
 where 
-    Tree: TotalChildrenExpansion<N>,
+    Tree: TotalNeighborGeneration<N>,
     B: Serialize,
 {
 
-    fn children(&mut self, node: &mut N) -> Vec<N> {
-        let res = self.s.children(node);
+    fn neighbors(&mut self, node: &mut N) -> Vec<N> {
+        let res = self.s.neighbors(node);
         self.stats.expanded += 1;
         self.stats.generated += (res.len()) as u64;
         if res.is_empty() {
@@ -240,14 +246,14 @@ where
     }
 }
 
-impl<N, Tree, B> PartialChildrenExpansion<N> for StatTsDecorator<Tree,B>
+impl<N, Tree, B> PartialNeighborGeneration<N> for StatTsDecorator<Tree,B>
 where 
-    Tree: PartialChildrenExpansion<N>,
+    Tree: PartialNeighborGeneration<N>,
     B: Serialize,
 {
 
-    fn get_next_child(&mut self, node: &mut N) -> Option<N> {
-        let res = self.s.get_next_child(node);
+    fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
+        let res = self.s.next_neighbor(node);
         match &res {
             None => { self.stats.expanded += 1; }
             Some(_) => { self.stats.generated += 1; }
@@ -264,17 +270,13 @@ where
 }
 
 
-impl<N, B, PE, Tree> PrefixEquivalenceTree<N, B, PE> for StatTsDecorator<Tree, B>
+impl<N, B, Id, Tree> Identifiable<N, Id> for StatTsDecorator<Tree, B>
 where
-    Tree: PrefixEquivalenceTree<N, B, PE>,
+    Tree: Identifiable<N, Id>,
     B: Serialize,
 {
-    fn get_pe(&self, n: &N) -> PE {
-        return self.s.get_pe(n);
-    }
-
-    fn prefix_bound(&self, n: &N) -> B {
-        return self.s.prefix_bound(n);
+    fn id(&self, n: &N) -> Id {
+        return self.s.id(n);
     }
 }
 
@@ -318,7 +320,7 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
             let mut tmp = json!({
                 "expanded": e.p.expanded,
                 "generated": e.p.generated,
-                "root": e.p.root,
+                "initial": e.p.initial,
                 "eval": e.p.eval,
                 "goals": e.p.goals,
                 "trashed": e.p.trashed,

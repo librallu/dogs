@@ -9,13 +9,21 @@ extern crate human_format;
  * Defines a metric to be displayed
  */
 pub enum Metric {
+    /// no data
     Empty,
+    /// use formatting like 5.4M, 4.7K, etc.
     LargeNumber(f64),
+    /// number of seconds (milliseconds precision)
     Time(f32),
+    /// standard text
     Text(String),
-    Int(i64),  // 1000000 -> "1.000.000"
+    // 1000000 -> "1.000.000"
+    Int(i64),
 }
 
+/**
+    produces a String to represent a given metric
+*/
 pub fn metric_to_string(m:&Metric) -> String {
     match m {
         Metric::Empty => {
@@ -57,6 +65,10 @@ pub fn metric_to_string(m:&Metric) -> String {
 /**
  * Implements a logger.
  * It allows components to register headers and update values to display
+ * **workflow:**
+ *  1. a component registers to the MetricLogger. It provides the data names and the MetricLogger returns their IDs.
+ *  2. a component can update a metric by providing its ID and new value
+ *  3. a component can request a display of all metrics
  */
 pub struct MetricLogger {
     headers: RefCell<Vec<String>>,  // maintains header order

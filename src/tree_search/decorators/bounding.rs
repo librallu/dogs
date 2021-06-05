@@ -5,8 +5,8 @@ use std::rc::{Weak, Rc};
 use std::cmp::max;
 use serde::{Serialize};
 
-use crate::metriclogger::{Metric, MetricLogger};
-use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree, ParetoDominanceSpace, PartialChildrenExpansion};
+use crate::metric_logger::{Metric, MetricLogger};
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 
 
 pub trait LifetimeEventListener<B> {
@@ -161,32 +161,63 @@ where B:Ord+Display+Clone+Copy+Into<i64> {
 /**
  * Registers the global dual bound
  *  - when a node is destructed: remove its bound of the pq and update the global bound
- *  - [TODO] when a node bound is updated: update the global bound
+ *  - TODO when a node bound is updated: update the global bound
  */
-pub struct BoundingDecorator<Tree, B> {
-    s: Tree,
+pub struct BoundingDecorator<Space, B> {
+    s: Space,
     bound_set: Rc<RefCell<BoundSet<B>>>,
 }
 
 
-impl<N,G,Tree,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Tree, B>
-where Tree:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
+impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Space, B>
+where Space:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
 {
     fn guide(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> G {
         return self.s.guide(&n.node);
     }
 }
 
-impl<N,Sol,Tree,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Tree, B>
+impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Space, B>
+where
+    Space: SearchSpace<N,B>+ToSolution<N,Sol>,
+    B:Ord+Display+Copy+Into<i64>
+{
+    fn solution(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> Sol {
+        return self.s.solution(&n.node);
+    }
+}
+
+
+impl<N,Space,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingDecorator<Space, B>
 where
     N:Clone,
-    Tree:SearchSpace<N,Sol>,
+    Space:SearchSpace<N,B>,
     B:Display+Ord+Copy+Into<i64>+Serialize,
     // C:LifetimeEventListener<B>
 {
 
-    fn solution(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> Sol {
-        return self.s.solution(&n.node);
+    fn initial(&mut self) -> LifetimeEventNode<N, B, BoundSet<B>> {
+        let initial = self.s.initial();
+        let bound = self.s.bound(&initial);
+        self.insert_bound(&bound);
+        return LifetimeEventNode {
+            node: initial,
+            bound: bound,
+            lifetime_listener: self.bound_set.clone(),
+            expanded: false,
+        };
+    }
+
+    fn bound(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> B {
+        return self.s.bound(&n.node);
+    }
+
+    fn goal(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> bool {
+        return self.s.goal(&n.node);
+    }
+
+    fn g_cost(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> B {
+        return self.s.g_cost(&n.node);
     }
 
     fn restart(&mut self, msg: String) {
@@ -229,13 +260,13 @@ where
     }
 }
 
-impl<N, B, Tree> TotalChildrenExpansion<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Tree, B>
+impl<N, B, Space> TotalNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B>
 where
-    Tree: TotalChildrenExpansion<N>+SearchTree<N,B>,
+    Space: TotalNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Display+Copy+Into<i64>
 {
-    fn children(&mut self, n: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Vec<LifetimeEventNode<N, B, BoundSet<B>>> {
-        let children = self.s.children(&mut n.node);
+    fn neighbors(&mut self, n: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Vec<LifetimeEventNode<N, B, BoundSet<B>>> {
+        let children = self.s.neighbors(&mut n.node);
         // create node wrappers
         let mut res:Vec<LifetimeEventNode<N, B, BoundSet<B>>> = Vec::new();
         for e in children {
@@ -254,40 +285,13 @@ where
 }
 
 
-impl<N, B, Tree> SearchTree<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingDecorator<Tree, B>
-where
-    Tree: SearchTree<N, B>,
-    B: Ord+Copy+Into<i64>+Display
-{
-    fn root(&mut self) -> LifetimeEventNode<N, B, BoundSet<B>> {
-        let root = self.s.root();
-        let bound = self.s.bound(&root);
-        self.insert_bound(&bound);
-        return LifetimeEventNode {
-            node: root,
-            bound: bound,
-            lifetime_listener: self.bound_set.clone(),
-            expanded: false,
-        };
-    }
-
-    fn bound(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> B {
-        return self.s.bound(&n.node);
-    }
-
-    fn goal(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> bool {
-        return self.s.goal(&n.node);
-    }
-
-}
-
-impl<Tree, B> BoundingDecorator<Tree, B> where B:Ord+Display+Copy+Into<i64> {
-    pub fn unwrap(&self) -> &Tree {
+impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
+    pub fn unwrap(&self) -> &Space {
         return &self.s;
     }
 
-    pub fn new<N>(s: Tree) -> Self
-    where Tree: SearchTree<N,B>, B:Ord+Into<i64> {
+    pub fn new<N>(s: Space) -> Self
+    where B:Ord+Into<i64> {
         Self {s: s, bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new())))}
     }
 
@@ -310,35 +314,31 @@ impl<Tree, B> BoundingDecorator<Tree, B> where B:Ord+Display+Copy+Into<i64> {
 
 }
 
-impl<N, B, PE, Tree> PrefixEquivalenceTree<N, B, PE> for BoundingDecorator<Tree, B>
+impl<N, B, Id, Space> Identifiable<N, Id> for BoundingDecorator<Space, B>
 where
-    Tree: PrefixEquivalenceTree<N, B, PE>,
+    Space: Identifiable<N, Id>,
 {
-    fn get_pe(&self, n: &N) -> PE {
-        return self.s.get_pe(n);
-    }
-
-    fn prefix_bound(&self, n: &N) -> B {
-        return self.s.prefix_bound(n);
+    fn id(&self, n: &N) -> Id {
+        return self.s.id(n);
     }
 }
 
 
-impl<N,Tree,B> ParetoDominanceSpace<N> for BoundingDecorator<Tree, B>
-where Tree: ParetoDominanceSpace<N>,
+impl<N,Space,B> ParetoDominanceSpace<N> for BoundingDecorator<Space, B>
+where Space: ParetoDominanceSpace<N>,
 {
     fn dominates(&self, a:&N, b:&N) -> bool {
         return self.s.dominates(a,b);
     }
 }
 
-impl<N,Tree,B> PartialChildrenExpansion<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Tree, B>
+impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B>
 where
-    Tree: PartialChildrenExpansion<N>+SearchTree<N, B>,
+    Space: PartialNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Copy+Into<i64>+Display
 {
-    fn get_next_child(&mut self, node: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Option<LifetimeEventNode<N, B, BoundSet<B>>> {
-        match self.s.get_next_child(&mut node.node) {
+    fn next_neighbor(&mut self, node: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Option<LifetimeEventNode<N, B, BoundSet<B>>> {
+        match self.s.next_neighbor(&mut node.node) {
             None => { node.expanded = true; return None; }
             Some(c) => {
                 let bound = self.s.bound(&c);

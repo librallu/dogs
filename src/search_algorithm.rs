@@ -2,7 +2,7 @@ use std::time::{SystemTime};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::searchmanager::SearchManager;
+use crate::search_manager::SearchManager;
 
 /**
  * Stopping criterion trait
@@ -47,10 +47,14 @@ pub trait SearchAlgorithm<N, B> {
      */
     fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC);
 
+    /**
+        Gets the search manager of the algorithm.
+        It allows to get the best found solution and its value, etc.
+    */
     fn get_manager(&mut self) -> &mut SearchManager<N,B>;
 
     /**
-     * returns true if the optimal value is found (thus we can stop the search)
+     * returns true if the optimal value is found (thus we can stop the search). False by default
      */
     fn is_optimal(&self) -> bool {
         return false;
@@ -58,7 +62,9 @@ pub trait SearchAlgorithm<N, B> {
 }
 
 /**
- * can be created using a parameter d (for instance beam search, MBA*, etc.)
+ indicates that the algorithm can be created using an integer parameter d
+ (for instance beam search, MBA*, etc.)
+ useful for iterative beam search, iterative MBA*, etc.
  */
 pub trait BuildableWithInteger<Space> {
     fn create_with_integer(s:Rc<RefCell<Space>>, d:usize) -> Self;

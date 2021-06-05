@@ -5,23 +5,21 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::fmt::Display;
 
-use crate::searchmanager::SearchManager;
-use crate::searchalgorithm::{BuildableWithInteger, SearchAlgorithm, StoppingCriterion};
-use crate::searchspace::{SearchSpace, GuidedSpace, SearchTree, TotalChildrenExpansion};
+use crate::search_manager::SearchManager;
+use crate::search_algorithm::{BuildableWithInteger, SearchAlgorithm, StoppingCriterion};
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 
-use crate::treesearch::algo::helper::guided_node::GuidedNode;
-use crate::treesearch::algo::helper::iterative::IterativeSearch;
+use crate::tree_search::algo::helper::guided_node::GuidedNode;
+use crate::tree_search::algo::helper::iterative::IterativeSearch;
 
-pub struct BeamSearch<N, B, G, Sol, Tree> {
+pub struct BeamSearch<N, B, G, Tree> {
     pub manager: SearchManager<N, B>,
     tree: Rc<RefCell<Tree>>,
     d: usize,
     heuristic_pruning_done: bool,
-    g: PhantomData<G>,
-    sol: PhantomData<Sol>,
-}
+    g: PhantomData<G>,}
 
-impl<N:Clone, B:PartialOrd+Copy, G, Sol, Tree> BeamSearch<N, B, G, Sol, Tree> {
+impl<N:Clone, B:PartialOrd+Copy, G, Tree> BeamSearch<N, B, G, Tree> {
     pub fn new(tree: Rc<RefCell<Tree>>, d: usize) -> Self {
         Self {
             manager: SearchManager::new(),
@@ -29,17 +27,16 @@ impl<N:Clone, B:PartialOrd+Copy, G, Sol, Tree> BeamSearch<N, B, G, Sol, Tree> {
             d: d,
             heuristic_pruning_done: false,
             g: PhantomData,
-            sol: PhantomData,
         }
     }
 }
 
 
-impl<'a, N, B, G:Ord, Sol, Tree> SearchAlgorithm<N, B> for BeamSearch<N, B, G, Sol, Tree>
+impl<'a, N, B, G:Ord, Tree> SearchAlgorithm<N, B> for BeamSearch<N, B, G, Tree>
 where
     N: Clone,
     B: PartialOrd+Copy,
-    Tree: SearchSpace<N,Sol> + GuidedSpace<N,G> + SearchTree<N,B> + TotalChildrenExpansion<N>,
+    Tree: SearchSpace<N,B> + GuidedSpace<N,G> + TotalNeighborGeneration<N>,
 {
     /**
      * runs until the stopping_criterion is reached
@@ -48,7 +45,7 @@ where
     where SC:StoppingCriterion,  {
         let mut space = self.tree.borrow_mut();
         let mut beam = MinMaxHeap::with_capacity(self.d);
-        let root = space.root();
+        let root = space.initial();
         let g_root = space.guide(&root);
         self.heuristic_pruning_done = false;
         beam.push(GuidedNode::new(root, g_root));
@@ -63,11 +60,11 @@ where
                     if self.manager.is_better(v) {
                         let n2 = space.handle_new_best(n);
                         let b2 = space.bound(&n2);
+                        n = n2.clone();
                         self.manager.update_best(n2, b2);
                     }
-                    continue;
                 }
-                let mut children = space.children(&mut n);
+                let mut children = space.neighbors(&mut n);
                 while !children.is_empty() {
                     let c = children.pop().unwrap();
                     // check if goal
@@ -108,7 +105,7 @@ where
     }
 }
 
-impl<N, B, G, Sol, Tree> BuildableWithInteger<Tree> for BeamSearch<N, B, G, Sol, Tree>
+impl<N, B, G, Tree> BuildableWithInteger<Tree> for BeamSearch<N, B, G, Tree>
 where N:Clone, B:PartialOrd+Copy {
     fn create_with_integer(tree: Rc<RefCell<Tree>>, d:usize) -> Self {
         Self::new(tree, d)
@@ -118,8 +115,8 @@ where N:Clone, B:PartialOrd+Copy {
 /**
  * creates an iterative beam search algorithm
  */
-pub fn create_iterative_beam_search<N, B, G, Sol, Tree>(space:Rc<RefCell<Tree>>, d_init:f64, growth:f64)
--> IterativeSearch<N, B, BeamSearch<N, B, G, Sol, Tree>, Sol, Tree>
+pub fn create_iterative_beam_search<N, B, G, Tree>(space:Rc<RefCell<Tree>>, d_init:f64, growth:f64)
+-> IterativeSearch<N, B, BeamSearch<N, B, G, Tree>, Tree>
 where N:Clone, B:Copy+PartialOrd+Display {
     return IterativeSearch::new(space, d_init, growth);
 }

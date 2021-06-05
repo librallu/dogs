@@ -1,5 +1,5 @@
-use crate::searchspace::{SearchSpace, GuidedSpace, TotalChildrenExpansion, PrefixEquivalenceTree, SearchTree, ParetoDominanceSpace, PartialChildrenExpansion};
-use crate::treesearch::decorators::helper::discrepancy::{DiscrepancyNode, DiscrepancyType};
+use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
+use crate::tree_search::decorators::helper::discrepancy::{DiscrepancyNode, DiscrepancyType};
 use std::marker::PhantomData;
 
 /**
@@ -22,13 +22,13 @@ where
     }
 }
 
-impl<N, Tree, D, G, B> TotalChildrenExpansion<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
+impl<N, Tree, D, G, B> TotalNeighborGeneration<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
 where 
-    Tree: TotalChildrenExpansion<N>+GuidedSpace<N,G>+SearchTree<N,B>,
+    Tree: TotalNeighborGeneration<N>+GuidedSpace<N,G>+SearchSpace<N,B>,
     D: DiscrepancyType,
     G: Ord+Into<f64>+From<f64>
 {
-    fn children(&mut self, n: &mut DiscrepancyNode<N>) -> Vec<DiscrepancyNode<N>> {
+    fn neighbors(&mut self, n: &mut DiscrepancyNode<N>) -> Vec<DiscrepancyNode<N>> {
         if n.discrepancies > self.allowed_discrepancies {
             return Vec::new();
         }
@@ -45,11 +45,38 @@ where
     }
 }
 
-impl<N,Sol,Tree,D,G,B> SearchSpace<DiscrepancyNode<N>,Sol> for LDSDecorator<Tree, D, G, B>
-where Tree:SearchSpace<N,Sol>
+
+impl <Space, D, G, B, N, Sol> ToSolution<DiscrepancyNode<N>,Sol> for LDSDecorator<Space, D, G, B>
+where
+    Space: SearchSpace<N,B>+ToSolution<N,Sol>
 {
     fn solution(&mut self, n: &DiscrepancyNode<N>) -> Sol {
         return self.s.solution(&n.node);
+    }
+}
+
+
+impl<N,Tree,D,G,B> SearchSpace<DiscrepancyNode<N>,B> for LDSDecorator<Tree, D, G, B>
+where Tree:SearchSpace<N,B>
+{
+
+    fn initial(&mut self) -> DiscrepancyNode<N> {
+        DiscrepancyNode {
+            node: self.s.initial(),
+            discrepancies: 0.
+        }
+    }
+
+    fn bound(&mut self, n: &DiscrepancyNode<N>) -> B {
+        return self.s.bound(&n.node);
+    }
+
+    fn g_cost(&mut self, n: &DiscrepancyNode<N>) -> B {
+        return self.s.g_cost(&n.node);
+    }
+
+    fn goal(&mut self, n: &DiscrepancyNode<N>) -> bool {
+        return self.s.goal(&n.node);
     }
 
     fn restart(&mut self, msg: String) {
@@ -77,26 +104,6 @@ where Tree:SearchSpace<N,Sol>
 }
 
 
-impl<N, B, G, Tree, D> SearchTree<DiscrepancyNode<N>,B> for LDSDecorator<Tree, D, G, B>
-where B:PartialOrd, G:Ord+Into<f64>+From<f64>, Tree:SearchTree<N,B>, D:DiscrepancyType {
-
-    fn root(&mut self) -> DiscrepancyNode<N> {
-        DiscrepancyNode {
-            node: self.s.root(),
-            discrepancies: 0.
-        }
-    }
-
-    fn bound(&mut self, n: &DiscrepancyNode<N>) -> B {
-        return self.s.bound(&n.node);
-    }
-
-    fn goal(&mut self, n: &DiscrepancyNode<N>) -> bool {
-        return self.s.goal(&n.node);
-    }
-
-}
-
 impl<Tree, D, G, B> LDSDecorator<Tree, D, G, B> {
     pub fn unwrap(&self) -> &Tree {
         return &self.s;
@@ -113,16 +120,12 @@ impl<Tree, D, G, B> LDSDecorator<Tree, D, G, B> {
     }
 }
 
-impl<N, B, PE, Tree, D, G> PrefixEquivalenceTree<DiscrepancyNode<N>, B, PE> for LDSDecorator<Tree, D, G, B>
+impl<N, B, Id, Tree, D, G> Identifiable<DiscrepancyNode<N>, Id> for LDSDecorator<Tree, D, G, B>
 where
-    Tree: PrefixEquivalenceTree<N, B, PE>,
+    Tree: Identifiable<N, Id>,
 {
-    fn get_pe(&self, n: &DiscrepancyNode<N>) -> PE {
-        return self.s.get_pe(&n.node);
-    }
-
-    fn prefix_bound(&self, n: &DiscrepancyNode<N>) -> B {
-        return self.s.prefix_bound(&n.node);
+    fn id(&self, n: &DiscrepancyNode<N>) -> Id {
+        return self.s.id(&n.node);
     }
 }
 
@@ -135,11 +138,11 @@ where Tree: ParetoDominanceSpace<N>
 }
 
 
-impl<N,Tree,D,G,B> PartialChildrenExpansion<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
+impl<N,Tree,D,G,B> PartialNeighborGeneration<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
 where
-    Tree: PartialChildrenExpansion<N>
+    Tree: PartialNeighborGeneration<N>
 {
-    fn get_next_child(&mut self, _node: &mut DiscrepancyNode<N>) -> Option<DiscrepancyNode<N>> {
+    fn next_neighbor(&mut self, _node: &mut DiscrepancyNode<N>) -> Option<DiscrepancyNode<N>> {
         panic!("not implemented");
     }
 }

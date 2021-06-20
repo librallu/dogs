@@ -75,7 +75,7 @@ pub trait ToSolution<N,Sol> {
      constructs a solution from a goal node
      panics if the node is not a goal
     */
-    fn solution(&mut self, node: &N) -> Sol;
+    fn solution(&mut self, node: &mut N) -> Sol;
 }
 
 

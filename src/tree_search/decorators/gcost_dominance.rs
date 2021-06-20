@@ -102,7 +102,7 @@ where Space:GuidedSpace<N,G>
 
 impl<N,Sol,Space,Id,B> ToSolution<N,Sol> for GcostDominanceTsDecorator<Space, Id, B>
 where Space:ToSolution<N,Sol> {
-    fn solution(&mut self, node: &N) -> Sol {
+    fn solution(&mut self, node: &mut N) -> Sol {
         return self.s.solution(node);
     }
 }

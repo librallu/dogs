@@ -50,8 +50,8 @@ impl <Space, D, G, B, N, Sol> ToSolution<DiscrepancyNode<N>,Sol> for LDSDecorato
 where
     Space: SearchSpace<N,B>+ToSolution<N,Sol>
 {
-    fn solution(&mut self, n: &DiscrepancyNode<N>) -> Sol {
-        return self.s.solution(&n.node);
+    fn solution(&mut self, n: &mut DiscrepancyNode<N>) -> Sol {
+        return self.s.solution(&mut n.node);
     }
 }
 

@@ -1,4 +1,0 @@
-- [ ] for a given set of results, compute if one is statistically better than the others (produce a CSV)
-    - arguments: 
-- [ ] produce a ARPD pareto diagram for an instance class 
-- [ ] produce a ARPD/ARPT pareto diagram 

@@ -182,8 +182,8 @@ where
     Space: SearchSpace<N,B>+ToSolution<N,Sol>,
     B:Ord+Display+Copy+Into<i64>
 {
-    fn solution(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> Sol {
-        return self.s.solution(&n.node);
+    fn solution(&mut self, n: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Sol {
+        return self.s.solution(&mut n.node);
     }
 }
 

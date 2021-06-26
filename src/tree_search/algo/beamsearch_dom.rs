@@ -28,17 +28,15 @@ pub struct BeamSearchDom<'a, Tree, N, B> {
 impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
     pub fn new(space: &'a mut Tree, d: usize, dom_scheme:BeamDominanceScheme) -> Self {
         Self {
-            manager: SearchManager::new(),
-            space: space,
-            d: d,
+            manager: SearchManager::default(),
+            space,
+            d,
             heuristic_pruning_done: false,
             beam_dominance_scheme: dom_scheme
         }
     }
 
-    pub fn is_heuristic_pruning_done(&self) -> bool {
-        return self.heuristic_pruning_done;
-    }
+    pub fn is_heuristic_pruning_done(&self) -> bool { self.heuristic_pruning_done }
 
     pub fn run<G: Ord+Clone>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
     where
@@ -90,9 +88,7 @@ impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
                     if !is_dominated {
                         let c_guide = self.space.guide(&c);
                         // possibly: add n to the elite set
-                        let elite_max_size:usize = match self.beam_dominance_scheme {
-                            BeamDominanceScheme::Fixed(e) => e
-                        };
+                        let BeamDominanceScheme::Fixed(elite_max_size) = self.beam_dominance_scheme;
                         if elites.len() < elite_max_size {
                             elites.push(GuidedNode::new(c.clone(), c_guide.clone()));
                         } else {

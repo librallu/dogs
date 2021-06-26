@@ -20,7 +20,7 @@ pub struct IterativeSearch<N, B, Algo, Tree> {
     growth: f64,
     logger: Weak<MetricLogger>,
     logging_id_msg: Option<usize>,
-    is_optimal_: bool,
+    is_optimal: bool,
     algo_phantom: PhantomData<Algo>,
 }
 
@@ -28,13 +28,13 @@ pub struct IterativeSearch<N, B, Algo, Tree> {
 impl<N:Clone, B: PartialOrd + Display + Copy, Algo, Tree> IterativeSearch<N, B, Algo, Tree> {
     pub fn new(space: Rc<RefCell<Tree>>, dinit: f64, growth: f64) -> Self {
         Self {
-            manager: SearchManager::new(),
-            space: space,
-            dinit: dinit,
-            growth: growth,
+            manager: SearchManager::default(),
+            space,
+            dinit,
+            growth,
             logger: Weak::new(),
             logging_id_msg: None,
-            is_optimal_: false,
+            is_optimal: false,
             algo_phantom: PhantomData,
         }
     }
@@ -49,7 +49,7 @@ impl<N:Clone, B: PartialOrd + Display + Copy, Algo, Tree> IterativeSearch<N, B, 
         }
         // registers the logger
         self.logger = logger_ref;
-        return self;
+        self
     }
 }
 
@@ -81,20 +81,16 @@ where
             // gets best
             d = ((d as f64) * self.growth).ceil();
             if ts.is_optimal() {
-                self.is_optimal_ = true;
+                self.is_optimal = true;
                 break
             }
         }
         self.space.borrow_mut().stop_search("".to_string());
     }
 
-    fn is_optimal(&self) -> bool {
-        return self.is_optimal_;
-    }
+    fn is_optimal(&self) -> bool { self.is_optimal }
 
-    fn get_manager(&mut self) -> &mut SearchManager<N,B> {
-        return &mut self.manager;
-    }
+    fn get_manager(&mut self) -> &mut SearchManager<N,B> { &mut self.manager }
 
 }
 

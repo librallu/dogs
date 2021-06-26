@@ -26,7 +26,7 @@ impl<N,B,C> Clone for LifetimeEventNode<N,B,C>
 where N:Clone, B:Clone, C: LifetimeEventListener<B> {
     fn clone(&self) -> Self {
         self.lifetime_listener.borrow_mut().on_insertvevent(&self.bound);
-        return Self {
+        Self {
             node: self.node.clone(),
             bound: self.bound.clone(),
             lifetime_listener: self.lifetime_listener.clone(),
@@ -62,7 +62,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
             set: BTreeMap::new(),
             global_bound: None,
             global_bound_display: None,
-            logger: logger,
+            logger,
             logging_id_bound: None,
         }
     }
@@ -74,7 +74,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
     pub fn update_global_bound_insert(&mut self, b:&B) {
         // if first node opened ever
         if self.global_bound == None {
-            self.global_bound = Some(b.clone());
+            self.global_bound = Some(*b);
             if let Some(logger) = self.logger.upgrade() {
                 if let Some(id) = self.logging_id_bound {
                     logger.update_metric(id, Metric::Int(b.clone().into()));
@@ -88,7 +88,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
         // updates BoundSet
         match self.set.get_mut(&b) {
             None => {
-                self.set.insert(b.clone(), 1);
+                self.set.insert(*b, 1);
             },
             Some(v) => {
                 *v += 1;
@@ -102,13 +102,13 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
         // updates BoundingSet
         let mut to_remove:bool = false;
         if let Some(v) = self.set.get_mut(&b) {
-            if *v > 1 {
-                *v -= 1;
-            } else if *v == 1 {
-                to_remove = true;
-            } else {
-                panic!("[BoundingCombinator] existing entry with value 0 (should be >= 1)");
-            }
+            match *v {
+                0 => {
+                    panic!("[BoundingCombinator] existing entry with value 0 (should be >= 1)");
+                }
+                1 => { to_remove = true },
+                _ => { *v -= 1; }
+            };
         } else { // if no entry, panic
             panic!("[BoundingCombinator] removing a bound value not-existing");
         }
@@ -119,13 +119,10 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
             match self.global_bound {
                 None => panic!("removing a bound value not-existing global bound"),
                 Some(v) => {
-                    let previous_bound = self.global_bound.clone();
-                    self.global_bound = match self.set.iter().next() {
-                        None => None,
-                        Some(v2) => {
-                            Some(max(v, v2.0.clone()))
-                        },
-                    };
+                    let previous_bound = self.global_bound;
+                    self.global_bound = self.set.iter().next().map(|v2|
+                        max(v, *v2.0)
+                    );
                     if previous_bound < self.global_bound {
                         logging_required = true;  // only logs if improving the bound
                     }
@@ -172,9 +169,7 @@ pub struct BoundingDecorator<Space, B> {
 impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Space, B>
 where Space:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
 {
-    fn guide(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> G {
-        return self.s.guide(&n.node);
-    }
+    fn guide(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> G { self.s.guide(&n.node) }
 }
 
 impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Space, B>
@@ -183,7 +178,7 @@ where
     B:Ord+Display+Copy+Into<i64>
 {
     fn solution(&mut self, n: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Sol {
-        return self.s.solution(&mut n.node);
+        self.s.solution(&mut n.node)
     }
 }
 
@@ -200,24 +195,24 @@ where
         let initial = self.s.initial();
         let bound = self.s.bound(&initial);
         self.insert_bound(&bound);
-        return LifetimeEventNode {
+        LifetimeEventNode {
             node: initial,
-            bound: bound,
+            bound,
             lifetime_listener: self.bound_set.clone(),
             expanded: false,
-        };
+        }
     }
 
     fn bound(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> B {
-        return self.s.bound(&n.node);
+        self.s.bound(&n.node)
     }
 
     fn goal(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> bool {
-        return self.s.goal(&n.node);
+        self.s.goal(&n.node)
     }
 
     fn g_cost(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> B {
-        return self.s.g_cost(&n.node);
+        self.s.g_cost(&n.node)
     }
 
     fn restart(&mut self, msg: String) {
@@ -280,19 +275,17 @@ where
             });
         }
         n.expanded = true;
-        return res;
+        res
     }
 }
 
 
 impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
-    pub fn unwrap(&self) -> &Space {
-        return &self.s;
-    }
+    pub fn unwrap(&self) -> &Space { &self.s }
 
     pub fn new<N>(s: Space) -> Self
     where B:Ord+Into<i64> {
-        Self {s: s, bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new())))}
+        Self {s, bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new())))}
     }
 
     pub fn insert_bound(&mut self, bound:&B) {
@@ -308,8 +301,8 @@ impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
             self.bound_set.as_ref().borrow_mut().logging_id_bound = Some(tmp[0]);
         }
         // registers the logger
-        self.bound_set.as_ref().borrow_mut().logger = logger_ref.clone();
-        return self;
+        self.bound_set.as_ref().borrow_mut().logger = logger_ref;
+        self
     }
 
 }
@@ -318,18 +311,14 @@ impl<N, B, Id, Space> Identifiable<N, Id> for BoundingDecorator<Space, B>
 where
     Space: Identifiable<N, Id>,
 {
-    fn id(&self, n: &N) -> Id {
-        return self.s.id(n);
-    }
+    fn id(&self, n: &N) -> Id { self.s.id(n) }
 }
 
 
 impl<N,Space,B> ParetoDominanceSpace<N> for BoundingDecorator<Space, B>
 where Space: ParetoDominanceSpace<N>,
 {
-    fn dominates(&self, a:&N, b:&N) -> bool {
-        return self.s.dominates(a,b);
-    }
+    fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
 impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B>
@@ -339,16 +328,16 @@ where
 {
     fn next_neighbor(&mut self, node: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Option<LifetimeEventNode<N, B, BoundSet<B>>> {
         match self.s.next_neighbor(&mut node.node) {
-            None => { node.expanded = true; return None; }
+            None => { node.expanded = true; None }
             Some(c) => {
                 let bound = self.s.bound(&c);
                 self.insert_bound(&bound);
-                return Some(LifetimeEventNode {
+                Some(LifetimeEventNode {
                     node: c,
-                    bound: bound,
+                    bound,
                     lifetime_listener: self.bound_set.clone(),
                     expanded: false,
-                });
+                })
             }
         }
     }

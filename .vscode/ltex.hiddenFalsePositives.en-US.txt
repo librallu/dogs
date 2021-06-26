@@ -1,0 +1,1 @@
+{"rule":"WORD_CONTAINS_UNDERSCORE","sentence":"^\\QReplace display_statistics by a function that displays statistics from export_stats (json format)\n Use Iterator trait for partial expansion (more idiomatic)\\E$"}

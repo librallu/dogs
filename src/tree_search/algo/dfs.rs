@@ -3,16 +3,16 @@ use std::collections::LinkedList;
 use crate::search_manager::SearchManager;
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 
-pub struct DFS<'a, Tree, N, B> {
+pub struct Dfs<'a, Tree, N, B> {
     pub manager: SearchManager<N, B>,
     space: &'a mut Tree,
 }
 
-impl<'a, Tree, N:Clone, B: PartialOrd + Copy> DFS<'a, Tree, N, B> {
-    pub fn new(space: &'a mut Tree) -> DFS<Tree, N, B> {
+impl<'a, Tree, N:Clone, B: PartialOrd + Copy> Dfs<'a, Tree, N, B> {
+    pub fn new(space: &'a mut Tree) -> Dfs<Tree, N, B> {
         Self {
-            manager: SearchManager::new(),
-            space: space,
+            manager: SearchManager::default(),
+            space,
         }
     }
 

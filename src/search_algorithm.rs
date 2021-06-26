@@ -1,4 +1,4 @@
-use std::time::{SystemTime};
+use std::time::SystemTime;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -27,14 +27,14 @@ impl TimeStoppingCriterion {
     pub fn new(t_max:f32) -> Self {
         Self {
             t_start: SystemTime::now(),
-            t_max: t_max,
+            t_max,
         }
     }
 }
 
 impl StoppingCriterion for TimeStoppingCriterion {
     fn is_finished(&self) -> bool {
-        return self.t_start.elapsed().unwrap().as_secs_f32() >= self.t_max;
+        self.t_start.elapsed().unwrap().as_secs_f32() >= self.t_max
     }
 }
 
@@ -56,9 +56,7 @@ pub trait SearchAlgorithm<N, B> {
     /**
      * returns true if the optimal value is found (thus we can stop the search). False by default
      */
-    fn is_optimal(&self) -> bool {
-        return false;
-    }
+    fn is_optimal(&self) -> bool { false }
 }
 
 /**

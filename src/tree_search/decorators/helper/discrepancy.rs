@@ -28,6 +28,7 @@ pub trait DiscrepancyType {
 /**
  * Linear discrepancy. The best child gets 0, the second best 1, *etc.*
  */
+#[derive(Default)]
 pub struct LinearDiscrepancy {}
 
 impl DiscrepancyType for LinearDiscrepancy {
@@ -43,18 +44,15 @@ impl DiscrepancyType for LinearDiscrepancy {
             res.push(DiscrepancyNode {node:tmp, discrepancies:d+(i as f64)});
             i += 1;
         }
-        return res;
+        res
     }
-}
-
-impl LinearDiscrepancy {
-    pub fn new() -> Self { Self {} }
 }
 
 
 /**
  * Constant discrepancy. The best child gets 0, the others 1
  */
+#[derive(Default)]
 pub struct ConstantDiscrepancy {}
 
 impl DiscrepancyType for ConstantDiscrepancy {
@@ -74,20 +72,16 @@ impl DiscrepancyType for ConstantDiscrepancy {
             
             i += 1;
         }
-        return res;
+        res
     }
 }
-
-impl ConstantDiscrepancy {
-    pub fn new() -> Self { Self {} }
-}
-
 
 
 /**
  * Ratio to best discrepancy. The best child (guide value of g0) gets 0, the second best gets (g1-g0)/g1 etc.
  * If g1 = 0, the discrepancy is 0. 
  */
+#[derive(Default)]
 pub struct RatioToBestDiscrepancy {}
 
 impl DiscrepancyType for RatioToBestDiscrepancy {
@@ -102,8 +96,7 @@ impl DiscrepancyType for RatioToBestDiscrepancy {
         neighbors.sort_by_key(|e| Reverse(s.guide(e)));
         let n:N = neighbors.pop().unwrap();
         let g0:f64 = s.guide(&n).into();
-        let mut res:Vec<DiscrepancyNode<N>> = Vec::new();
-        res.push(DiscrepancyNode {node:n, discrepancies:d});
+        let mut res:Vec<DiscrepancyNode<N>> = vec![DiscrepancyNode {node:n, discrepancies:d}];
         while !neighbors.is_empty() {  // extracts other neighbors and updates their discrepancies
             let n:N = neighbors.pop().unwrap();
             let gn:f64 = s.guide(&n).into();
@@ -113,10 +106,6 @@ impl DiscrepancyType for RatioToBestDiscrepancy {
             }
             res.push(DiscrepancyNode {node:n, discrepancies:d+discrepancy_increment});
         }
-        return res;
+        res
     }
-}
-
-impl RatioToBestDiscrepancy {
-    pub fn new() -> Self { Self {} }
 }

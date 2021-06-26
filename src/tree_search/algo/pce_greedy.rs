@@ -16,8 +16,8 @@ pub struct PCEGreedy<N, B, G, Tree> {
 impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEGreedy<N, B, G, Tree> {
     pub fn new(tree: Rc<RefCell<Tree>>) -> Self {
         Self {
-            manager: SearchManager::new(),
-            tree: tree,
+            manager: SearchManager::default(),
+            tree,
             g: PhantomData,
         }
     }
@@ -58,11 +58,11 @@ where
     }
 
 
-    fn get_manager(&mut self) -> &mut SearchManager<N, B> { return &mut self.manager; }
+    fn get_manager(&mut self) -> &mut SearchManager<N, B> { &mut self.manager }
 
     /**
      * returns true if the optimal value is found (thus we can stop the search).
      * For this greedy, we set it to always false (it is not destined to prove optimality)
      */
-    fn is_optimal(&self) -> bool { return false; }
+    fn is_optimal(&self) -> bool { false }
 }

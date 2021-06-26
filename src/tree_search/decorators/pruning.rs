@@ -9,32 +9,22 @@ pub struct PruningDecorator<Space, B> {
 impl<N,G,Space,B> GuidedSpace<N,G> for PruningDecorator<Space, B> 
 where Space:GuidedSpace<N,G>
 {
-    fn guide(&mut self, n: &N) -> G {
-        return self.s.guide(n);
-    }
+    fn guide(&mut self, n: &N) -> G { self.s.guide(n) }
 }
 
 impl<N,Sol,Space,B> ToSolution<N,Sol> for PruningDecorator<Space, B>
 where Space:ToSolution<N,Sol> {
-    fn solution(&mut self, node: &mut N) -> Sol {
-        return self.s.solution(node);
-    }
+    fn solution(&mut self, node: &mut N) -> Sol { self.s.solution(node) }
 }
 
 impl<N,Space,B> SearchSpace<N,B> for PruningDecorator<Space,B>
 where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd+Clone
 {
-    fn initial(&mut self) -> N {
-        return self.s.initial();
-    }
+    fn initial(&mut self) -> N { self.s.initial() }
 
-    fn bound(&mut self, n: &N) -> B {
-        return self.s.bound(n);
-    }
+    fn bound(&mut self, n: &N) -> B { self.s.bound(n) }
 
-    fn g_cost(&mut self, n: &N) -> B {
-        return self.s.g_cost(n);
-    }
+    fn g_cost(&mut self, n: &N) -> B { self.s.g_cost(n) }
 
     fn goal(&mut self, n: &N) -> bool {
         let res = self.s.goal(n);
@@ -49,7 +39,7 @@ where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd+Clone
                 }
             }
         }
-        return res;
+        res
     }
 
     fn restart(&mut self, msg: String) {
@@ -85,7 +75,7 @@ where
 
     fn neighbors(&mut self, n: &mut N) -> Vec<N> {
         match self.best_val {
-            None => { return self.s.neighbors(n); }
+            None => { self.s.neighbors(n) }
             Some(best_v) => {
                 let mut res = Vec::new();
                 let mut children = self.s.neighbors(n);
@@ -96,9 +86,8 @@ where
                         res.push(child);
                     }
                 }
-                // res.reverse();
                 self.nb_prunings += children_size as u64 - res.len() as u64;
-                return res;
+                res
             }
         }
     }
@@ -106,12 +95,10 @@ where
 
 
 impl<Space, B> PruningDecorator<Space, B> {
-    pub fn unwrap(&self) -> &Space {
-        return &self.s;
-    }
+    pub fn unwrap(&self) -> &Space { &self.s }
 
     pub fn new(s: Space) -> Self {
-        Self {s: s, best_val: None, nb_prunings: 0}
+        Self {s, best_val: None, nb_prunings: 0}
     }
 }
 
@@ -119,18 +106,14 @@ impl<N, B, Id, Space> Identifiable<N, Id> for PruningDecorator<Space, B>
 where
     Space: Identifiable<N, Id>,
 {
-    fn id(&self, n: &N) -> Id {
-        return self.s.id(n);
-    }
+    fn id(&self, n: &N) -> Id { self.s.id(n) }
 }
 
 
 impl<N,Space,B> ParetoDominanceSpace<N> for PruningDecorator<Space, B>
 where Space: ParetoDominanceSpace<N>
 {
-    fn dominates(&self, a:&N, b:&N) -> bool {
-        return self.s.dominates(a,b);
-    }
+    fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
 
@@ -141,16 +124,15 @@ where
 {
     fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
         match self.s.next_neighbor(node) {
-            None => { return None; },
+            None => { None },
             Some(c) => {
                 match self.best_val {
-                    None => { return Some(c); }
+                    None => { Some(c) }
                     Some(best_v) => {
-                        if self.s.bound(&c) < best_v {
-                            return Some(c);
-                        } else {
+                        if self.s.bound(&c) < best_v { Some(c) }
+                        else {
                             self.nb_prunings += 1;
-                            return self.next_neighbor(node);
+                            self.next_neighbor(node)
                         }
                     }
                 }

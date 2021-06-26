@@ -86,13 +86,13 @@ mod tests {
 
     #[test]
     fn multiple_children() {
-        let a = DecisionTree::new(0);
-        let b = DecisionTree::add_child(&a, 1);
-        let c = DecisionTree::add_child(&b, 2);
-        let d = DecisionTree::add_child(&a, 3);
-        let e = DecisionTree::add_child(&d, 4);
-        assert_eq!(DecisionTree::decisions_from_root(&c), vec![0,1,2]);
-        assert_eq!(DecisionTree::decisions_from_root(&e), vec![0,3,4]);
+        let node_a = DecisionTree::new(0);
+        let node_b = DecisionTree::add_child(&node_a, 1);
+        let node_c = DecisionTree::add_child(&node_b, 2);
+        let node_d = DecisionTree::add_child(&node_a, 3);
+        let node_e = DecisionTree::add_child(&node_d, 4);
+        assert_eq!(DecisionTree::decisions_from_root(&node_c), vec![0,1,2]);
+        assert_eq!(DecisionTree::decisions_from_root(&node_e), vec![0,3,4]);
     }
 }
 

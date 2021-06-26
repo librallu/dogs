@@ -32,6 +32,11 @@ impl SparseSet {
     }
 
     /**
+    returns true iff the set is empty
+    */
+    pub fn is_empty(&self) -> bool { self.n == 0 }
+
+    /**
     returns the number of elements in the set
     */
     pub fn len(&self) -> usize {

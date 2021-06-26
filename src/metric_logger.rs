@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
 extern crate human_format;
 
@@ -26,20 +26,14 @@ pub enum Metric {
 */
 pub fn metric_to_string(m:&Metric) -> String {
     match m {
-        Metric::Empty => {
-            return String::new();
-        },
+        Metric::Empty => { String::new() },
         Metric::LargeNumber(n) => {
-            return format!("{}", human_format::Formatter::new()
+            human_format::Formatter::new()
                 .with_decimals(1)
-                .format(*n));
+                .format(*n)
         },
-        Metric::Time(n) => {
-            return format!("  {:.3}", n);
-        },
-        Metric::Text(s) => {
-            return s.clone();
-        },
+        Metric::Time(n) => { format!("  {:.3}", n) },
+        Metric::Text(s) => { s.clone() },
         Metric::Int(n) => {
             let mut res:String = String::new();
             let mut tmp:i64 = *n;
@@ -56,7 +50,7 @@ pub fn metric_to_string(m:&Metric) -> String {
             for e in l.iter().rev() {
                 res += format!(".{}", e).as_str();
             }
-            return res;
+            res
         },
     }
 }
@@ -76,9 +70,8 @@ pub struct MetricLogger {
     t_start: SystemTime,
 }
 
-impl MetricLogger {
-
-    pub fn new() -> Self {
+impl Default for MetricLogger {
+    fn default() -> Self {
         let mut headers = Vec::new();
         let mut metrics = Vec::new();
         headers.push(format!("{:<15}"," time (s)"));
@@ -89,6 +82,9 @@ impl MetricLogger {
             t_start: SystemTime::now(),
         }
     }
+}
+
+impl MetricLogger {
 
     /**
      * requests metric information from all the registered components and display the metrics
@@ -104,7 +100,7 @@ impl MetricLogger {
             let s = metric_to_string(e);
             print!("{}{}", s, " ".repeat(headers[i].len()-s.len()));
         }
-        println!("");
+        println!();
     }
 
     /**
@@ -120,7 +116,7 @@ impl MetricLogger {
             headers_ref.push(h);
             metrics_ref.push(Metric::Empty);
         }
-        return res;
+        res
     }
 
     /**
@@ -141,7 +137,7 @@ impl MetricLogger {
             print!("{}", h);
             size += h.len();
         }
-        println!("");
+        println!();
         println!("{}",("-".repeat(size)));
     }
 }

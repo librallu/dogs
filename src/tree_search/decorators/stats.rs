@@ -66,7 +66,7 @@ where
 {
     fn guide(&mut self, node: &N) -> G {
         self.stats.guide += 1;
-        return self.s.guide(node);
+        self.s.guide(node)
     }
 }
 
@@ -74,7 +74,7 @@ where
 impl<N,Sol,Space,B> ToSolution<N,Sol> for StatTsDecorator<Space, B>
 where Space:ToSolution<N,Sol>, B:serde::Serialize {
     fn solution(&mut self, node: &mut N) -> Sol {
-        return self.s.solution(node);
+        self.s.solution(node)
     }
 }
 
@@ -87,12 +87,12 @@ where
 
     fn initial(&mut self) -> N {
         self.stats.initial += 1;
-        return self.s.initial();
+        self.s.initial()
     }
 
     fn bound(&mut self, node: &N) -> B {
         self.stats.eval += 1;
-        return self.s.bound(node);
+        self.s.bound(node)
     }
 
     /**
@@ -100,12 +100,12 @@ where
      */
     fn g_cost(&mut self, node: &N) -> B {
         self.stats.eval += 1;
-        return self.s.g_cost(node);
+        self.s.g_cost(node)
     }
 
     fn goal(&mut self, node: &N) -> bool {
         self.stats.goals += 1;
-        return self.s.goal(node);
+        self.s.goal(node)
     }
 
     fn restart(&mut self, msg: String) {
@@ -144,7 +144,7 @@ where
                 logger.request_logging();
             }
         }
-        return n2;
+        n2
     }
 
     /// adds factice point when the search stops
@@ -180,7 +180,7 @@ where
         self.s.display_statistics();
         let time = self.t_start.elapsed().unwrap().as_secs_f32();
         let format = |e| human_format::Formatter::new().with_decimals(1).format(e);
-        println!("");
+        println!();
         println!(
             "{:>25}{:>15}",
             "nb generated",
@@ -242,7 +242,7 @@ where
                 );
             }
         }
-        return res;
+        res
     }
 }
 
@@ -265,7 +265,7 @@ where
                 );
             }
         }
-        return res;
+        res
     }
 }
 
@@ -275,15 +275,13 @@ where
     Tree: Identifiable<N, Id>,
     B: Serialize,
 {
-    fn id(&self, n: &N) -> Id {
-        return self.s.id(n);
-    }
+    fn id(&self, n: &N) -> Id { self.s.id(n) }
 }
 
 impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
     pub fn new(s: Tree) -> Self {
-        let res = Self {
-            s: s,
+        Self {
+            s,
             stats: PerfProfilePoint::new(),
             t_start: SystemTime::now(),
             nb_sols: 0,
@@ -291,13 +289,10 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
             logger: Weak::new(),
             logging_id_nbnodes: None,
             logging_id_obj: None,
-        };
-        return res;
+        }
     }
 
-    pub fn unwrap(&self) -> &Tree {
-        return &self.s;
-    }
+    pub fn unwrap(&self) -> &Tree { &self.s }
 
     pub fn bind_logger(mut self, logger_ref:Weak<MetricLogger>) -> Self {
         if let Some(logger) = logger_ref.upgrade() {
@@ -311,7 +306,7 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
         }
         // registers the logger
         self.logger = logger_ref;
-        return self;
+        self
     }
 
     pub fn get_pareto_diagram(&self) -> serde_json::Value {
@@ -345,7 +340,5 @@ where
     Tree: ParetoDominanceSpace<N>,
     B: Serialize,
 {
-    fn dominates(&self, a:&N, b:&N) -> bool {
-        return self.s.dominates(a,b);
-    }
+    fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }

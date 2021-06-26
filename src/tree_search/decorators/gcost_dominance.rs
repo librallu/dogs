@@ -28,7 +28,7 @@ pub struct DominanceStore<Id, B> {
 impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
     pub fn new(name:String) -> Self {
         Self {
-            name: name,
+            name,
             store: FxHashMap::default(),
             nb_gets: 0,
             nb_dominations: 0,
@@ -46,22 +46,22 @@ impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
                     || (info.val == b && info.iter == iter)
                 {
                     self.nb_dominations += 1;
-                    return true; // if node dominated
+                    true // if node dominated
                 } else {
                     // otherwise, add it to the database (update)
                     info.val = b;
                     info.iter = iter;
                     self.nb_updates += 1;
-                    return false;
+                    false
                 }
             }
             Entry::Vacant(v) => {
                 // otherwise, add it to the database (new entry)
                 v.insert(DominanceInfo {
                     val: b,
-                    iter: iter,
+                    iter,
                 });
-                return false;
+                false
             }
         }
     }
@@ -95,36 +95,24 @@ pub struct GcostDominanceTsDecorator<Space, Id, B> {
 impl<N,G,Space,Id,B> GuidedSpace<N,G> for GcostDominanceTsDecorator<Space, Id, B>
 where Space:GuidedSpace<N,G>
 {
-    fn guide(&mut self, n: &N) -> G {
-        return self.s.guide(n);
-    }
+    fn guide(&mut self, n: &N) -> G { self.s.guide(n) }
 }
 
 impl<N,Sol,Space,Id,B> ToSolution<N,Sol> for GcostDominanceTsDecorator<Space, Id, B>
 where Space:ToSolution<N,Sol> {
-    fn solution(&mut self, node: &mut N) -> Sol {
-        return self.s.solution(node);
-    }
+    fn solution(&mut self, node: &mut N) -> Sol { self.s.solution(node) }
 }
 
 impl<N,Space,Id,B> SearchSpace<N,B> for GcostDominanceTsDecorator<Space, Id, B>
 where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd, Id:Hash+Eq
 {
-    fn initial(&mut self) -> N {
-        return self.s.initial();
-    }
+    fn initial(&mut self) -> N { self.s.initial() }
 
-    fn bound(&mut self, node: &N) -> B {
-        return self.s.bound(node);
-    }
+    fn bound(&mut self, node: &N) -> B { self.s.bound(node) }
 
-    fn g_cost(&mut self, node: &N) -> B {
-        return self.s.g_cost(node);
-    }
+    fn g_cost(&mut self, node: &N) -> B { self.s.g_cost(node) }
 
-    fn goal(&mut self, node: &N) -> bool {
-        return self.s.goal(node);
-    }
+    fn goal(&mut self, node: &N) -> bool { self.s.goal(node) }
 
     fn restart(&mut self, msg: String) {
         self.current_iter += 1;
@@ -161,23 +149,18 @@ where
         // check if current node is dominated, otherwise, return neighbors of underlying node
         let pe = self.s.id(node);
         let bound = self.s.g_cost(node);
-        if self.store.is_dominated_or_add(pe, bound, self.current_iter) {
-            return Vec::new();
-        } else {
-            return self.s.neighbors(node);
-        }
+        if self.store.is_dominated_or_add(pe, bound, self.current_iter) { Vec::new() }
+        else { self.s.neighbors(node) }
     }
 }
 
 
 impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:PartialOrd {
-    pub fn unwrap(&self) -> &Space {
-        return &self.s;
-    }
+    pub fn unwrap(&self) -> &Space { &self.s }
 
     pub fn new(s: Space) -> Self {
         Self {
-            s: s,
+            s,
             store: DominanceStore::new("".to_string()),
             current_iter: 0,
         }
@@ -187,9 +170,7 @@ impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:P
 impl<N,Space,Id,B> ParetoDominanceSpace<N> for GcostDominanceTsDecorator<Space, Id, B>
 where Space: ParetoDominanceSpace<N>
 {
-    fn dominates(&self, a:&N, b:&N) -> bool {
-        return self.s.dominates(a,b);
-    }
+    fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
 impl<N,Space,Id,B> PartialNeighborGeneration<N> for GcostDominanceTsDecorator<Space, Id, B>
@@ -200,16 +181,14 @@ where
 {
     fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
         match self.s.next_neighbor(node) {
-            None => { return None; },
+            None => { None },
             Some(c) => {
                 // checks if c is dominated
                 let id = self.s.id(&c);
                 let prefix_bound = self.s.g_cost(&c);
                 if self.store.is_dominated_or_add(id, prefix_bound, self.current_iter) {
-                    return self.next_neighbor(node); // if node dominated, try another one
-                } else {
-                    return Some(c);
-                }
+                    self.next_neighbor(node) // if node dominated, try another one
+                } else { Some(c) }
             }
         }
     }

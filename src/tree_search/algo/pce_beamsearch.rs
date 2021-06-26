@@ -24,9 +24,9 @@ pub struct PCEBeamSearch<N, B, G, Tree> {
 impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEBeamSearch<N, B, G, Tree> {
     pub fn new(tree: Rc<RefCell<Tree>>, d: usize) -> Self {
         Self {
-            manager: SearchManager::new(),
-            tree: tree,
-            d: d,
+            manager: SearchManager::default(),
+            tree,
+            d,
             heuristic_pruning_done: false,
             g: PhantomData,
         }
@@ -110,16 +110,12 @@ where
     }
 
 
-    fn get_manager(&mut self) -> &mut SearchManager<N, B> {
-        return &mut self.manager;
-    }
+    fn get_manager(&mut self) -> &mut SearchManager<N, B> { &mut self.manager }
 
     /**
      * returns true if the optimal value is found (thus we can stop the search)
      */
-    fn is_optimal(&self) -> bool {
-        return !self.heuristic_pruning_done;
-    }
+    fn is_optimal(&self) -> bool { !self.heuristic_pruning_done }
 }
 
 
@@ -136,7 +132,7 @@ where N:Clone, B:PartialOrd+Copy {
 pub fn create_iterative_pce_beam_search<N, B, G, Tree>(space:Rc<RefCell<Tree>>, d_init:f64, growth:f64)
 -> IterativeSearch<N, B, PCEBeamSearch<N, B, G, Tree>, Tree>
 where N:Clone, B:Copy+PartialOrd+Display {
-    return IterativeSearch::new(space, d_init, growth);
+    IterativeSearch::new(space, d_init, growth)
 }
 
 

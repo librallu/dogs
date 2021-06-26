@@ -19,14 +19,15 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 
 - [X] Bounding decorator: measures dual bounds
 - [X] LDS decorator: limits the exploration of the tree to the nodes with few discrepancies
-- [X] PrefixEquivalence dominance decorator: implements prefix equivalence dominances
+- [X] G-cost dominance decorator: implements g-cost dominance
 - [X] Pruning decorator: prunes nodes that are dominated by the best-known solution
 - [X] Statistics decorator: reports various statistics of the search
 
 
-### What's next?
+### Roadmap: What's next?
 
-- [ ] replace display_statistics by a function that displays statistics from export_stats (json format)
+- [ ] Replace display_statistics by a function that displays statistics from export_stats (JSON format)
+- [ ] Use Iterator trait for partial expansion (more idiomatic)
 
 ## examples
 

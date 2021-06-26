@@ -12,35 +12,32 @@ pub struct SearchManager<N, B> {
     best_val: Option<B>,
 }
 
-impl<N:Clone, B:PartialOrd+Copy> SearchManager<N, B> {
-    pub fn new() -> Self {
+impl<N:Clone, B:PartialOrd+Copy> Default for SearchManager<N, B> {
+    fn default() -> Self {
         SearchManager {
             t_start: SystemTime::now(),
             best: None,
             best_val: None,
         }
     }
+}
+
+impl<N:Clone, B:PartialOrd+Copy> SearchManager<N, B> {
 
     /**
      * returns the best known solution if it exists
      */
-    pub fn best(&self) -> &Option<N> {
-        return &self.best;
-    }
+    pub fn best(&self) -> &Option<N> { &self.best }
 
     /**
      * returns the best known primal value (objective) if it exists
      */
-    pub fn best_val(&self) -> &Option<B> {
-        return &self.best_val;
-    }
+    pub fn best_val(&self) -> &Option<B> { &self.best_val }
 
     /**
      * returns the elapsed time since the beginning of the search
      */
-    pub fn elapsed_time(&self) -> Duration {
-        self.t_start.elapsed().unwrap()
-    }
+    pub fn elapsed_time(&self) -> Duration { self.t_start.elapsed().unwrap() }
 
     /**
      * returns true if current objective is better than the best known solution objective

@@ -13,8 +13,8 @@ pub struct BestFirst<'a, Tree, N, B> {
 impl<'a, Tree, N:Clone, B: PartialOrd + Copy> BestFirst<'a, Tree, N, B> {
     pub fn new(space: &'a mut Tree) -> Self {
         Self {
-            manager: SearchManager::new(),
-            space: space,
+            manager: SearchManager::default(),
+            space,
         }
     }
 

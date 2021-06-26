@@ -1,11 +1,9 @@
 use std::fmt::{Display, Debug};
-use std::time::{SystemTime};
-use std::rc::{Weak};
+use std::time::SystemTime;
+use std::rc::Weak;
 
 use serde::Serialize;
 use serde_json::json;
-
-extern crate human_format;
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, Identifiable, TotalNeighborGeneration, PartialNeighborGeneration, ParetoDominanceSpace, ToSolution};
@@ -48,6 +46,8 @@ impl PerfProfilePoint {
     }
 }
 
+/** stats decorator. Stores statistics data-structures and reference to the logger. */
+#[derive(Debug)]
 pub struct StatTsDecorator<Tree, B:Serialize> {
     s: Tree,
     stats: PerfProfilePoint,
@@ -131,16 +131,16 @@ where
         // call the handle new best (possibly improve the solution)
         let n2 = self.s.handle_new_best(n);
         self.nb_sols += 1;
-        let obj = self.s.bound(&n2);
+        let obj2 = self.s.bound(&n2);
         self.perfprofile.push(PerfProfileEntry {
             p: self.stats.clone(),
             t: self.t_start.elapsed().unwrap().as_secs_f32(),
-            v: Some(obj.clone())
+            v: Some(obj2.clone())
         });
         // updates logger and display statistics
         if let Some(logger) = self.logger.upgrade() {
             if let Some(id) = self.logging_id_obj {
-                logger.update_metric(id, Metric::Int(obj.into()));
+                logger.update_metric(id, Metric::Int(obj2.into()));
                 logger.request_logging();
             }
         }
@@ -279,6 +279,7 @@ where
 }
 
 impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
+    /** builds the decorator around a search space */
     pub fn new(s: Tree) -> Self {
         Self {
             s,
@@ -292,8 +293,10 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
         }
     }
 
+    /** unwraps itself */
     pub fn unwrap(&self) -> &Tree { &self.s }
 
+    /** binds to a logger (to display statistics in the console) */
     pub fn bind_logger(mut self, logger_ref:Weak<MetricLogger>) -> Self {
         if let Some(logger) = logger_ref.upgrade() {
             // adds headers to the logger
@@ -309,6 +312,7 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
         self
     }
 
+    /** generates pareto diagram to visualize the search statistics */
     pub fn get_pareto_diagram(&self) -> serde_json::Value {
         let mut points:Vec<serde_json::Value> = vec![];
         for e in &self.perfprofile {

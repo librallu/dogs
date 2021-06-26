@@ -2,40 +2,47 @@ use std::cmp::PartialOrd;
 use std::collections::hash_map::Entry;
 use std::hash::Hash;
 
-extern crate fxhash;
 use fxhash::FxHashMap;
-
-extern crate human_format;
 
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 
 
+/**
+implements a dominance information used to represent a previous state (g-cost and iter number)
+*/
 #[derive(Debug)]
 pub struct DominanceInfo<B> {
     val: B,
     iter: u32,
 }
 
+/**
+stores dominances and counts the number of gets/dominations/updates
+*/
 #[derive(Debug)]
 pub struct DominanceStore<Id, B> {
-    name: String,
     store: FxHashMap<Id, DominanceInfo<B>>,
     nb_gets: usize,
     nb_dominations: usize,
     nb_updates: usize,
 }
 
-impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
-    pub fn new(name:String) -> Self {
+impl<Id, B> Default for DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
+    /** builds the dominance store  */
+    fn default() -> Self {
         Self {
-            name,
             store: FxHashMap::default(),
             nb_gets: 0,
             nb_dominations: 0,
             nb_updates: 0
         }
     }
+}
 
+impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
+    /**
+    returns true if the information is dominated, or insert it and returns false.
+    */
     pub fn is_dominated_or_add(&mut self, pe:Id, b:B, iter:u32) -> bool {
         self.nb_gets += 1;
         match self.store.entry(pe) {
@@ -66,15 +73,16 @@ impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
         }
     }
 
+    /** displays statistics of the search */
     pub fn display_statistics(&self) {
         let format = |e| human_format::Formatter::new().with_decimals(1).format(e);
-        println!("{} dominances:", self.name);
         println!("{:>25}{:>15}", "nb elts", format(self.store.len() as f64));
         println!("{:>25}{:>15}", "nb gets", format(self.nb_gets as f64));
         println!("{:>25}{:>15}", "nb pruned", format(self.nb_dominations as f64));
         println!("{:>25}{:>15}", "nb updates", format(self.nb_updates as f64));
     }
 
+    /** exports statistics to a JSON format */
     pub fn export_statistics(&self, json:&mut serde_json::Value) {
         json["pe_nb_elts"] = serde_json::json!(self.store.len());
         json["pe_nb_gets"] = serde_json::json!(self.nb_gets);
@@ -86,6 +94,7 @@ impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
 
 
 /// Prefix Equivalence Dominance Decorator
+#[derive(Debug)]
 pub struct GcostDominanceTsDecorator<Space, Id, B> {
     s: Space,
     current_iter: u32,
@@ -156,12 +165,14 @@ where
 
 
 impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:PartialOrd {
+    /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
+    /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         Self {
             s,
-            store: DominanceStore::new("".to_string()),
+            store: DominanceStore::default(),
             current_iter: 0,
         }
     }

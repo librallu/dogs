@@ -5,6 +5,7 @@ use std::marker::PhantomData;
 /**
  * Restrics the search tree by the children having positive remaining discrepancies.
  */
+#[derive(Debug)]
 pub struct LDSDecorator<Tree, D, G, B> {
     s: Tree,
     allowed_discrepancies: f64,
@@ -95,8 +96,11 @@ where Tree:SearchSpace<N,B>
 
 
 impl<Tree, D, G, B> LDSDecorator<Tree, D, G, B> {
+    /** unwraps itself */
     pub fn unwrap(&self) -> &Tree { &self.s }
 
+    /** builds the decorator around a search space, the number of allowed discrepancies and
+    a discrepancy policy */
     pub fn new(s: Tree, allowed_discrepancies: f64, d:D) -> Self {
         Self {
             s,

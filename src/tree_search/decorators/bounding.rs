@@ -9,16 +9,30 @@ use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 
 
+/**
+Provides methods to be called if a node is destroyed or inserted. 
+*/
 pub trait LifetimeEventListener<B> {
+    /// on destruction callback
     fn on_destructevent(&mut self, b: &B);
+    /// on insertion callback
     fn on_insertvevent(&mut self, b: &B);
 }
 
+
+/** 
+wrapper on a node to monitor its destruction or insertion.
+*/
+#[derive(Debug)]
 pub struct LifetimeEventNode<N, B, C>
 where C: LifetimeEventListener<B> {
+    /// original node
     pub node: N,
+    /// bound of the node
     pub bound: B,
+    /// reference to the event listener
     pub lifetime_listener: Rc<RefCell<C>>,
+    /// true iff the node was already expanded (used to identify heuristic prunings)
     pub expanded: bool,
 }
 
@@ -48,29 +62,37 @@ where C: LifetimeEventListener<B> {
 /**
  * Maintains the node bound set for the BoundingCombinator
  */
+#[derive(Debug)]
 pub struct BoundSet<B> {
+    /// set of active nodes bounds 
     pub set: BTreeMap<B, usize>,
+    /// best dual bound
     pub global_bound: Option<B>,
-    pub global_bound_display: Option<B>,
+    /// logger to display global bound update
     pub logger: Weak<MetricLogger>,
+    /// id of the bound field in the logger
     pub logging_id_bound: Option<usize>,
 }
 
 impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
+    /** builds a bound set by giving it a logger */
     pub fn new(logger: Weak<MetricLogger>,) -> Self {
         Self {
             set: BTreeMap::new(),
             global_bound: None,
-            global_bound_display: None,
             logger,
             logging_id_bound: None,
         }
     }
 
+    /** call it when the search resets */
     pub fn reset(&mut self) {
         self.set.clear();
     }
 
+    /**
+    used the first time a node is opened
+    */
     pub fn update_global_bound_insert(&mut self, b:&B) {
         // if first node opened ever
         if self.global_bound == None {
@@ -78,12 +100,12 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
             if let Some(logger) = self.logger.upgrade() {
                 if let Some(id) = self.logging_id_bound {
                     logger.update_metric(id, Metric::Int(b.clone().into()));
-                    // logger.request_logging();
                 }
             }
         }
     }
 
+    /** inserts a new node in the bound set */
     pub fn insert(&mut self, b:&B) {
         // updates BoundSet
         match self.set.get_mut(&b) {
@@ -98,6 +120,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
         self.update_global_bound_insert(b);
     }
 
+    /** removes a node from the bound set */
     pub fn remove(&mut self, b:&B) {
         // updates BoundingSet
         let mut to_remove:bool = false;
@@ -160,8 +183,11 @@ where B:Ord+Display+Clone+Copy+Into<i64> {
  *  - when a node is destructed: remove its bound of the pq and update the global bound
  *  - TODO when a node bound is updated: update the global bound
  */
+#[derive(Debug)]
 pub struct BoundingDecorator<Space, B> {
+    /// wrapped search space
     s: Space,
+    /// bound set to measure the bound
     bound_set: Rc<RefCell<BoundSet<B>>>,
 }
 
@@ -281,17 +307,21 @@ where
 
 
 impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
+    /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
+    /** builds the decorator using the wrapped space */
     pub fn new<N>(s: Space) -> Self
     where B:Ord+Into<i64> {
         Self {s, bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new())))}
     }
 
-    pub fn insert_bound(&mut self, bound:&B) {
+    /** insert the bound in the bound set */
+    fn insert_bound(&mut self, bound:&B) {
         self.bound_set.borrow_mut().insert(bound);
     }
 
+    /** binds the logger to display bound updates */
     pub fn bind_logger(self, logger_ref:Weak<MetricLogger>) -> Self {
         if let Some(logger) = logger_ref.upgrade() {
             // adds headers to the logger

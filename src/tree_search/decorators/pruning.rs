@@ -1,5 +1,10 @@
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 
+
+/**
+pruning decorator: stores the best known solution and counts the number of prunings for statistics.
+*/
+#[derive(Debug)]
 pub struct PruningDecorator<Space, B> {
     s: Space,
     best_val: Option<B>,
@@ -95,8 +100,10 @@ where
 
 
 impl<Space, B> PruningDecorator<Space, B> {
+    /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
+    /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         Self {s, best_val: None, nb_prunings: 0}
     }

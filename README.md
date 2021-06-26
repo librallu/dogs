@@ -1,11 +1,11 @@
 # DOGS (Discrete Optimization Global Search) framework
 
 Implements various search algorithms within a unified paradigm (so far, mostly anytime tree search algorithms).
-see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tree_search_for_decoratorial_optimization) for more information about anytime tree search algorithms.
+See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tree_search_for_decoratorial_optimization) for more information about anytime tree search algorithms.
 
-## implemented components
+## Implemented components
 
-### tree search algorithms
+### Tree search algorithms
 
 - [X] Partial Expansion Greedy algorithm
 - [X] Beam Search
@@ -15,7 +15,7 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 - [X] Limited Discrepancy Search
 - [X] Partial Expansion (Iterative) Beam Search
 
-### decorators
+### Decorators
 
 - [X] Bounding decorator: measures dual bounds
 - [X] LDS decorator: limits the exploration of the tree to the nodes with few discrepancies
@@ -26,8 +26,10 @@ see [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 
 ### Roadmap: What's next?
 
-- [ ] Replace display_statistics by a function that displays statistics from export_stats (JSON format)
+- [ ] Replace display statistics by a function that displays statistics from export stats (JSON format)
 - [ ] Use Iterator trait for partial expansion (more idiomatic)
+- [ ] Performance improvement for the PruningDecorator
+- [ ] Add Decorator trait and base implementation for unwrap()
 
 ## examples
 
@@ -39,42 +41,42 @@ Some examples are available for various problems. For some of them, the DOGS imp
 
 ## Some helpful tips
 
-### install rust
+### Install rust
 
-see [rust getting started page](https://www.rust-lang.org/learn/get-started).
+See [rust getting started page](https://www.rust-lang.org/learn/get-started).
 
 
-### flamegraph profiling (linux)
+### Flamegraph profiling (Linux)
 
-1. install requirements ```sudo apt install -y linux-tools-common linux-tools-generic```
-2. install flamegraph via cargo ```cargo install flamegraph```
-3. disable the sudo requirement for perf: ```echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid```. Possibly, `sudo sh -c 'echo kernel.perf_event_paranoid=1 > /etc/sysctl.d/local.conf'` may allow you to do not use the previous command in every terminal.
-4. add the following in the ``Cargo.toml``:
+1. Install requirements ```sudo apt install -y linux-tools-common linux-tools-generic```
+2. Install flamegraph via cargo ```cargo install flamegraph```
+3. Disable the sudo requirement for perf: ```echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid```. Possibly, `sudo sh -c 'echo kernel.perf_event_paranoid=1 > /etc/sysctl.d/local.conf'` may allow you to do not use the previous command in every terminal.
+4. Add the following in the ``Cargo.toml``:
 ```rust
 [profile.release]
 debug = true
 ```
 5. ```cargo flamegraph ARGUMENTS```. For instance (SOP): ```cargo flamegraph insts/R.700.1000.15.sop 30```
-6. visualize the flamegraph (here by using firefox): ```firefox flamegraph.svg```
+6. Visualize the flamegraph (here by using Firefox): ```firefox flamegraph.svg```.
 
 
 
-### heap profiling (linux)
+### Heap profiling (Linux)
 
 We recommend using use [heaptrack](https://github.com/KDE/heaptrack).
 
-1. call `heaptrack PROG`
-2. analyse data `heaptrack_gui DATA.gz`
+1. Call `heaptrack PROG`
+2. Analyze data `heaptrack_gui DATA.gz`
 
 
-### iterating over files (linux)
+### Iterating over files (Linux)
 
 ```bash
 for f in `ls DIRNAME/*`; do COMMAND "${f}"; done
 ```
 
-### benchmarking
+### Benchmarking
 
 This project uses [cargo-criterion](https://crates.io/crates/cargo-criterion).
 
-while cargo-criterion is installed, you can just call it by: `cargo criterion`
+While cargo-criterion is installed, you can just call it by: `cargo criterion`

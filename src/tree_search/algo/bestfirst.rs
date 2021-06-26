@@ -5,6 +5,7 @@ use crate::search_manager::SearchManager;
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 use crate::tree_search::algo::helper::guided_node::GuidedNode;
 
+// TODO use new format
 pub struct BestFirst<'a, Tree, N, B> {
     pub manager: SearchManager<N, B>,
     space: &'a mut Tree,

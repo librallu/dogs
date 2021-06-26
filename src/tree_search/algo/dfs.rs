@@ -3,6 +3,7 @@ use std::collections::LinkedList;
 use crate::search_manager::SearchManager;
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 
+// TODO: new format
 pub struct Dfs<'a, Tree, N, B> {
     pub manager: SearchManager<N, B>,
     space: &'a mut Tree,

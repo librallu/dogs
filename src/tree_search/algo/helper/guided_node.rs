@@ -1,14 +1,22 @@
 use std::cmp::Ordering;
 
 /**
- * implements a guided node (implements the Ord trait for nodes using the guide method from the search space)
- */
+implements a guided node.
+ - implements the Ord trait for nodes using the guide method from the search space)
+ - fast guidance computation if the underlying search-space does not explicitely stores the guide
+*/
+#[derive(Debug)]
 pub struct GuidedNode<N, G:Ord> {
+    /// underlying node
     pub node: N,
+    /// guide of the node
     pub guide: G,
 }
 
 impl<N, G:Ord> GuidedNode<N, G> {
+    /**
+    builds a GuidedNode from the node and its guide value
+    */
     pub fn new(n:N, g:G) -> Self { GuidedNode { node:n, guide:g } }
 }
 

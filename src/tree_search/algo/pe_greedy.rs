@@ -7,13 +7,19 @@ use crate::search_manager::SearchManager;
 use crate::search_space::{SearchSpace, GuidedSpace, PartialNeighborGeneration};
 use crate::search_algorithm::{SearchAlgorithm, StoppingCriterion};
 
-pub struct PCEGreedy<N, B, G, Tree> {
+/**
+implements a partial expansion greedy algorithm
+*/
+#[derive(Debug)]
+pub struct PEGreedy<N, B, G, Tree> {
+    /// search manager
     pub manager: SearchManager<N, B>,
     tree: Rc<RefCell<Tree>>,
     g: PhantomData<G>,
 }
 
-impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEGreedy<N, B, G, Tree> {
+impl<N:Clone, B:PartialOrd+Copy, G, Tree> PEGreedy<N, B, G, Tree> {
+    /** builds the partial expansion greedy using the search space */
     pub fn new(tree: Rc<RefCell<Tree>>) -> Self {
         Self {
             manager: SearchManager::default(),
@@ -23,7 +29,7 @@ impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEGreedy<N, B, G, Tree> {
     }
 }
 
-impl<'a, N, B, G:Ord+Clone, Tree> SearchAlgorithm<N, B> for PCEGreedy<N, B, G, Tree>
+impl<'a, N, B, G:Ord+Clone, Tree> SearchAlgorithm<N, B> for PEGreedy<N, B, G, Tree>
 where
     N: Clone,
     B: PartialOrd+Copy,

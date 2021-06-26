@@ -14,6 +14,9 @@ pub enum LazyClonableContent<T:Clone> {
     Computed(Rc<T>)
 }
 
+/**
+Lazy clonable structure. Its content is cloned only needed from its parent.
+*/
 #[derive(Debug)]
 pub struct LazyClonable<T:Clone> {
     content: LazyClonableContent<T>
@@ -33,7 +36,6 @@ impl<T:Clone> LazyClonable<T> {
     if already computed, get nothing, otherwise clone from the parent and become "computed"
     */
     pub fn lazy_get(&mut self) -> Rc<T> {
-        ////////////// V3
         match &self.content {
             LazyClonableContent::Ref(r) => {
                 // if not "computed" yet: update the content to "computed"
@@ -43,26 +45,6 @@ impl<T:Clone> LazyClonable<T> {
             }, // otherwise, just return the "computed" reference
             LazyClonableContent::Computed(r) => { r.clone() }
         }
-        ////////////// V2
-        // // if not "computed" yet: update the content to "computed"
-        // if let LazyClonableContent::Ref(r) = &self.content {
-        //     self.content = LazyClonableContent::Computed(
-        //         Rc::new(r.as_ref().clone())
-        //     );
-        // }
-        // match &self.content {
-        //     LazyClonableContent::Computed(v) => v.clone(),
-        //     LazyClonableContent::Ref(_) => panic!("lazy_clonable:lazy_get: something went wrong!")
-        // }
-        /////////// V1
-        // let res:Rc<T>;
-        // match &self.content {
-        //     LazyClonableContent::Ref(r) => { res = Rc::new(r.as_ref().clone());
-        //     },
-        //     LazyClonableContent::Computed(r) => { res = r.clone() }
-        // }
-        // self.content = LazyClonableContent::Computed(res.clone());
-        // res
     }
 
     /**
@@ -79,6 +61,9 @@ impl<T:Clone> LazyClonable<T> {
         }
     }
 
+    /**
+    true iff the object has already been cloned.
+    */
     pub fn is_cloned(&self) -> bool {
         match &self.content {
             LazyClonableContent::Ref(_) => false,

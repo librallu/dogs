@@ -7,7 +7,9 @@ Using this data-structure works great on large instances and large branching fac
 */
 #[derive(Debug)]
 pub struct DecisionTree<D> {
+    /// decision of the node
     pub d:D,
+    /// pointer towards the parent (empty if the node is the root)
     pub parent:Option<Rc<DecisionTree<D>>>,
 }
 

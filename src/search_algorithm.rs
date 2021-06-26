@@ -9,6 +9,9 @@ use crate::search_manager::SearchManager;
  * Can be time limit, number of iterations, or else
  */
 pub trait StoppingCriterion:Clone {
+    /**
+    true iff the search should finish.
+    */
     fn is_finished(&self) -> bool;
 }
 
@@ -24,6 +27,9 @@ pub struct TimeStoppingCriterion {
 }
 
 impl TimeStoppingCriterion {
+    /** stops after t_max time
+    t_max: number of seconds the algorithm is allowed to run.
+    */
     pub fn new(t_max:f32) -> Self {
         Self {
             t_start: SystemTime::now(),
@@ -65,5 +71,8 @@ pub trait SearchAlgorithm<N, B> {
  useful for iterative beam search, iterative MBA*, etc.
  */
 pub trait BuildableWithInteger<Space> {
+    /**
+    constructor taking an integer as a parameter.
+    */
     fn create_with_integer(s:Rc<RefCell<Space>>, d:usize) -> Self;
 }

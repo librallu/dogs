@@ -12,18 +12,24 @@ use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
 use crate::tree_search::algo::helper::guided_node::GuidedNode;
 use crate::tree_search::algo::helper::iterative::IterativeSearch;
 
+/**
+beam search algorithm structure
+*/
+#[derive(Debug)]
 pub struct BeamSearch<N, B, G, Tree> {
+    /// search manager
     pub manager: SearchManager<N, B>,
-    tree: Rc<RefCell<Tree>>,
+    space: Rc<RefCell<Tree>>,
     d: usize,
     heuristic_pruning_done: bool,
     g: PhantomData<G>,}
 
 impl<N:Clone, B:PartialOrd+Copy, G, Tree> BeamSearch<N, B, G, Tree> {
-    pub fn new(tree: Rc<RefCell<Tree>>, d: usize) -> Self {
+    /** builds the beam search given a search space and a beam width */
+    pub fn new(space: Rc<RefCell<Tree>>, d: usize) -> Self {
         Self {
             manager: SearchManager::default(),
-            tree,
+            space,
             d,
             heuristic_pruning_done: false,
             g: PhantomData,
@@ -43,7 +49,7 @@ where
      */
     fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC)
     where SC:StoppingCriterion,  {
-        let mut space = self.tree.borrow_mut();
+        let mut space = self.space.borrow_mut();
         let mut beam = MinMaxHeap::with_capacity(self.d);
         let root = space.initial();
         let g_root = space.guide(&root);

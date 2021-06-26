@@ -11,13 +11,16 @@ use crate::tree_search::algo::helper::guided_node::GuidedNode;
  * used to eliminate dominated nodes.
  * TODO: replace with the new beam search format
  */
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum BeamDominanceScheme {
     /// keep a maximum number of elite nodes
     Fixed(usize)
 }
 
+/** beam search with pareto-dominance scheme */
+#[derive(Debug)]
 pub struct BeamSearchDom<'a, Tree, N, B> {
+    /// search manager
     pub manager: SearchManager<N, B>,
     space: &'a mut Tree,
     d: usize,
@@ -26,6 +29,7 @@ pub struct BeamSearchDom<'a, Tree, N, B> {
 }
 
 impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
+    /** builds the beam search using the search space, the beam width, and the dominance scheme */
     pub fn new(space: &'a mut Tree, d: usize, dom_scheme:BeamDominanceScheme) -> Self {
         Self {
             manager: SearchManager::default(),

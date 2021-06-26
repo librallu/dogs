@@ -12,8 +12,13 @@ use crate::search_manager::SearchManager;
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_algorithm::{BuildableWithInteger, StoppingCriterion, SearchAlgorithm};
 
-
+/**
+An iterative search repetively builds a search algorithm that can be constructed using an integer
+it progressively increases the number that represents the search effort.
+*/
+#[derive(Debug)]
 pub struct IterativeSearch<N, B, Algo, Tree> {
+    /// search manager of the iterative search
     pub manager: SearchManager<N, B>,
     space: Rc<RefCell<Tree>>,
     dinit: f64,
@@ -26,6 +31,9 @@ pub struct IterativeSearch<N, B, Algo, Tree> {
 
 
 impl<N:Clone, B: PartialOrd + Display + Copy, Algo, Tree> IterativeSearch<N, B, Algo, Tree> {
+    /** constructs an iterated search from the search space, and the integer series defined
+    as the initial value (dinit) and the geometric growth factor (growth).
+    */
     pub fn new(space: Rc<RefCell<Tree>>, dinit: f64, growth: f64) -> Self {
         Self {
             manager: SearchManager::default(),
@@ -39,6 +47,9 @@ impl<N:Clone, B: PartialOrd + Display + Copy, Algo, Tree> IterativeSearch<N, B, 
         }
     }
 
+    /**
+    binds the iterative search to a logger (to display the iteration number)
+    */
     pub fn bind_logger(mut self, logger_ref:Weak<MetricLogger>) -> Self {
         if let Some(logger) = logger_ref.upgrade() {
             // adds headers to the logger
@@ -79,7 +90,7 @@ where
             ts.run(stopping_criterion.clone());
             ts.get_manager().give_best(&mut self.manager);
             // gets best
-            d = ((d as f64) * self.growth).ceil();
+            d = (d * self.growth).ceil();
             if ts.is_optimal() {
                 self.is_optimal = true;
                 break

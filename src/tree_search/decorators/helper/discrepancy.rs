@@ -5,9 +5,11 @@ use crate::search_space::{GuidedSpace, TotalNeighborGeneration};
 /**
  * Adds a discrepancy value within nodes
  */
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub struct DiscrepancyNode<N> {
+    /// underlying node
     pub node: N,
+    /// current number of discrepancies
     pub discrepancies: f64
 }
 
@@ -28,7 +30,7 @@ pub trait DiscrepancyType {
 /**
  * Linear discrepancy. The best child gets 0, the second best 1, *etc.*
  */
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct LinearDiscrepancy {}
 
 impl DiscrepancyType for LinearDiscrepancy {
@@ -52,7 +54,7 @@ impl DiscrepancyType for LinearDiscrepancy {
 /**
  * Constant discrepancy. The best child gets 0, the others 1
  */
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ConstantDiscrepancy {}
 
 impl DiscrepancyType for ConstantDiscrepancy {
@@ -81,7 +83,7 @@ impl DiscrepancyType for ConstantDiscrepancy {
  * Ratio to best discrepancy. The best child (guide value of g0) gets 0, the second best gets (g1-g0)/g1 etc.
  * If g1 = 0, the discrepancy is 0. 
  */
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct RatioToBestDiscrepancy {}
 
 impl DiscrepancyType for RatioToBestDiscrepancy {
@@ -93,18 +95,20 @@ impl DiscrepancyType for RatioToBestDiscrepancy {
             return Vec::new();
         }
         // invariant: neighbors contains at least 1 element
+        // this neighbor has the discrepancy of its parent
         neighbors.sort_by_key(|e| Reverse(s.guide(e)));
-        let n:N = neighbors.pop().unwrap();
-        let g0:f64 = s.guide(&n).into();
-        let mut res:Vec<DiscrepancyNode<N>> = vec![DiscrepancyNode {node:n, discrepancies:d}];
-        while !neighbors.is_empty() {  // extracts other neighbors and updates their discrepancies
-            let n:N = neighbors.pop().unwrap();
-            let gn:f64 = s.guide(&n).into();
+        let neigh:N = neighbors.pop().unwrap();
+        let g0:f64 = s.guide(&neigh).into();
+        let mut res:Vec<DiscrepancyNode<N>> = vec![DiscrepancyNode {node:neigh, discrepancies:d}];
+        // extracts other neighbors and updates their discrepancies
+        while !neighbors.is_empty() {
+            let neigh2:N = neighbors.pop().unwrap();
+            let gn:f64 = s.guide(&neigh2).into();
             let mut discrepancy_increment = 0.;
             if gn > 0. {
                 discrepancy_increment = (gn-g0)/gn;
             }
-            res.push(DiscrepancyNode {node:n, discrepancies:d+discrepancy_increment});
+            res.push(DiscrepancyNode {node:neigh2, discrepancies:d+discrepancy_increment});
         }
         res
     }

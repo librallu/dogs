@@ -1,13 +1,10 @@
 use std::cell::RefCell;
 use std::time::SystemTime;
 
-extern crate human_format;
-
-
-
 /**
  * Defines a metric to be displayed
  */
+#[derive(Debug)]
 pub enum Metric {
     /// no data
     Empty,
@@ -17,7 +14,7 @@ pub enum Metric {
     Time(f32),
     /// standard text
     Text(String),
-    // 1000000 -> "1.000.000"
+    /// int pretty print: example: 1000000 -> "1.000.000"
     Int(i64),
 }
 
@@ -64,6 +61,7 @@ pub fn metric_to_string(m:&Metric) -> String {
  *  2. a component can update a metric by providing its ID and new value
  *  3. a component can request a display of all metrics
  */
+#[derive(Debug)]
 pub struct MetricLogger {
     headers: RefCell<Vec<String>>,  // maintains header order
     metrics: RefCell<Vec<Metric>>, // maintains every up-to-date entry

@@ -22,6 +22,9 @@ pub struct SparseSet {
 
 
 impl SparseSet {
+    /**
+    creates a new sparse set from its maximum size (nb_max)
+    */
     pub fn new(nb_max: usize) -> Self {
         Self {
             dense: vec![usize::MAX;nb_max],
@@ -43,6 +46,9 @@ impl SparseSet {
         self.n
     }
 
+    /**
+    returns the nth element of the set
+    */
     pub fn nth(&self, i:usize) -> usize {
         debug_assert!(i<self.n);
         self.dense[i]
@@ -62,6 +68,7 @@ impl SparseSet {
         self.n += 1;
     }
 
+    /** removes e from the set */
     pub fn remove(&mut self, e:usize) {
         debug_assert!(self.contains(e));
         // put the last element at the position of e
@@ -71,7 +78,9 @@ impl SparseSet {
         self.sparse[e] = usize::MAX;
     }
 
+    /** removes everything except e from the set */
     pub fn remove_all_but_one(&mut self, e:usize) {
+        debug_assert!(self.contains(e));
         // put e at the first position
         self.sparse[self.dense[0]] = usize::MAX;
         self.dense[0] = e;

@@ -1,3 +1,7 @@
+/**
+Defines a search space. A search space is a graph structure (directed or not).
+It contains nodes. The initial state is the entry point of the search procedure. 
+*/
 pub trait SearchSpace<N,B> {
     /**
         returns the initial (or root) node
@@ -69,7 +73,9 @@ pub trait SearchSpace<N,B> {
     fn request_logging(&self, _res:Vec<String>) {}
 }
 
-
+/**
+exports a node to a problem solution Sol.
+*/
 pub trait ToSolution<N,Sol> {
     /**
      constructs a solution from a goal node
@@ -78,7 +84,9 @@ pub trait ToSolution<N,Sol> {
     fn solution(&mut self, node: &mut N) -> Sol;
 }
 
-
+/**
+Defines a guidance function
+*/
 pub trait GuidedSpace<N,G> {
     /**
      * returns the guide value of the node

@@ -12,20 +12,26 @@ use crate::search_algorithm::{BuildableWithInteger, SearchAlgorithm, StoppingCri
 use crate::tree_search::algo::helper::guided_node::GuidedNode;
 use crate::tree_search::algo::helper::iterative::IterativeSearch;
 
-pub struct PCEBeamSearch<N, B, G, Tree> {
+/**
+implements a partial expansion beam search
+*/
+#[derive(Debug)]
+pub struct PEBeamSearch<N, B, G, Tree> {
+    /// search manager
     pub manager: SearchManager<N, B>,
-    tree: Rc<RefCell<Tree>>,
+    space: Rc<RefCell<Tree>>,
     d: usize,
     heuristic_pruning_done: bool,
     g: PhantomData<G>,
 }
 
 
-impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEBeamSearch<N, B, G, Tree> {
-    pub fn new(tree: Rc<RefCell<Tree>>, d: usize) -> Self {
+impl<N:Clone, B:PartialOrd+Copy, G, Tree> PEBeamSearch<N, B, G, Tree> {
+    /** builds the algorithm using the search space and the beam width */
+    pub fn new(space: Rc<RefCell<Tree>>, d: usize) -> Self {
         Self {
             manager: SearchManager::default(),
-            tree,
+            space,
             d,
             heuristic_pruning_done: false,
             g: PhantomData,
@@ -34,7 +40,7 @@ impl<N:Clone, B:PartialOrd+Copy, G, Tree> PCEBeamSearch<N, B, G, Tree> {
 }
 
 
-impl<'a, N, B, G:Ord+Clone, Tree> SearchAlgorithm<N, B> for PCEBeamSearch<N, B, G, Tree>
+impl<'a, N, B, G:Ord+Clone, Tree> SearchAlgorithm<N, B> for PEBeamSearch<N, B, G, Tree>
 where
     N: Clone,
     B: PartialOrd+Copy,
@@ -50,7 +56,7 @@ where
     */
     fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC)
     where SC:StoppingCriterion,  {
-        let mut space = self.tree.borrow_mut();
+        let mut space = self.space.borrow_mut();
         let mut beam = MinMaxHeap::with_capacity(self.d);
         let root = space.initial();
         let g_root = space.guide(&root);
@@ -119,7 +125,7 @@ where
 }
 
 
-impl<N, B, G, Tree> BuildableWithInteger<Tree> for PCEBeamSearch<N, B, G, Tree>
+impl<N, B, G, Tree> BuildableWithInteger<Tree> for PEBeamSearch<N, B, G, Tree>
 where N:Clone, B:PartialOrd+Copy {
     fn create_with_integer(space: Rc<RefCell<Tree>>, d:usize) -> Self {
         Self::new(space, d)
@@ -130,7 +136,7 @@ where N:Clone, B:PartialOrd+Copy {
  * creates an iterative beam search algorithm
  */
 pub fn create_iterative_pce_beam_search<N, B, G, Tree>(space:Rc<RefCell<Tree>>, d_init:f64, growth:f64)
--> IterativeSearch<N, B, PCEBeamSearch<N, B, G, Tree>, Tree>
+-> IterativeSearch<N, B, PEBeamSearch<N, B, G, Tree>, Tree>
 where N:Clone, B:Copy+PartialOrd+Display {
     IterativeSearch::new(space, d_init, growth)
 }

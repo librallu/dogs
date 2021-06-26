@@ -6,6 +6,7 @@ use std::time::{Duration, SystemTime};
  * handles common mechanisms best known solutions in a search algortihm.
  * provides mechanisms to update the best known solution
  */
+#[derive(Debug)]
 pub struct SearchManager<N, B> {
     t_start: SystemTime,
     best: Option<N>,

@@ -7,7 +7,7 @@ use serde::{Serialize};
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
-
+use crate::search_decorator::SearchSpaceDecorator;
 
 /**
 Provides methods to be called if a node is destroyed or inserted. 
@@ -303,6 +303,11 @@ where
         n.expanded = true;
         res
     }
+}
+
+
+impl<Space, B> SearchSpaceDecorator<Space> for BoundingDecorator<Space, B> {
+    fn unwrap(&self) -> &Space { &self.s }
 }
 
 

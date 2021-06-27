@@ -1,6 +1,8 @@
+use std::marker::PhantomData;
+
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
 use crate::tree_search::decorators::helper::discrepancy::{DiscrepancyNode, DiscrepancyType};
-use std::marker::PhantomData;
+use crate::search_decorator::SearchSpaceDecorator;
 
 /**
  * Restrics the search tree by the children having positive remaining discrepancies.
@@ -21,9 +23,9 @@ where
     fn guide(&mut self, n: &DiscrepancyNode<N>) -> G { self.s.guide(&n.node) }
 }
 
-impl<N, Tree, D, G, B> TotalNeighborGeneration<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
+impl<N, Space, D, G, B> TotalNeighborGeneration<DiscrepancyNode<N>> for LDSDecorator<Space, D, G, B>
 where 
-    Tree: TotalNeighborGeneration<N>+GuidedSpace<N,G>+SearchSpace<N,B>,
+    Space: TotalNeighborGeneration<N>+GuidedSpace<N,G>+SearchSpace<N,B>,
     D: DiscrepancyType,
     G: Ord+Into<f64>+From<f64>
 {
@@ -53,8 +55,8 @@ where
 }
 
 
-impl<N,Tree,D,G,B> SearchSpace<DiscrepancyNode<N>,B> for LDSDecorator<Tree, D, G, B>
-where Tree:SearchSpace<N,B>
+impl<N,Space,D,G,B> SearchSpace<DiscrepancyNode<N>,B> for LDSDecorator<Space, D, G, B>
+where Space:SearchSpace<N,B>
 {
 
     fn initial(&mut self) -> DiscrepancyNode<N> {
@@ -94,14 +96,15 @@ where Tree:SearchSpace<N,B>
     }
 }
 
+impl<Space, D, G, B> SearchSpaceDecorator<Space> for LDSDecorator<Space, D, G, B> {
+    fn unwrap(&self) -> &Space { &self.s }
+}
 
-impl<Tree, D, G, B> LDSDecorator<Tree, D, G, B> {
-    /** unwraps itself */
-    pub fn unwrap(&self) -> &Tree { &self.s }
+impl<Space, D, G, B> LDSDecorator<Space, D, G, B> {
 
     /** builds the decorator around a search space, the number of allowed discrepancies and
     a discrepancy policy */
-    pub fn new(s: Tree, allowed_discrepancies: f64, d:D) -> Self {
+    pub fn new(s: Space, allowed_discrepancies: f64, d:D) -> Self {
         Self {
             s,
             allowed_discrepancies,
@@ -112,15 +115,15 @@ impl<Tree, D, G, B> LDSDecorator<Tree, D, G, B> {
     }
 }
 
-impl<N, B, Id, Tree, D, G> Identifiable<DiscrepancyNode<N>, Id> for LDSDecorator<Tree, D, G, B>
+impl<N, B, Id, Space, D, G> Identifiable<DiscrepancyNode<N>, Id> for LDSDecorator<Space, D, G, B>
 where
-    Tree: Identifiable<N, Id>,
+    Space: Identifiable<N, Id>,
 {
     fn id(&self, n: &DiscrepancyNode<N>) -> Id { self.s.id(&n.node) }
 }
 
-impl<N,Tree,D,G,B> ParetoDominanceSpace<DiscrepancyNode<N>> for LDSDecorator<Tree, D, G, B>
-where Tree: ParetoDominanceSpace<N>
+impl<N,Space,D,G,B> ParetoDominanceSpace<DiscrepancyNode<N>> for LDSDecorator<Space, D, G, B>
+where Space: ParetoDominanceSpace<N>
 {
     fn dominates(&self, a:&DiscrepancyNode<N>, b:&DiscrepancyNode<N>) -> bool {
         self.s.dominates(&a.node,&b.node)

@@ -7,7 +7,7 @@ use serde_json::json;
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, Identifiable, TotalNeighborGeneration, PartialNeighborGeneration, ParetoDominanceSpace, ToSolution};
-
+use crate::search_decorator::SearchSpaceDecorator;
 
 /// search statistics data (at a given time)
 #[derive(Clone, Debug)]
@@ -48,8 +48,8 @@ impl PerfProfilePoint {
 
 /** stats decorator. Stores statistics data-structures and reference to the logger. */
 #[derive(Debug)]
-pub struct StatTsDecorator<Tree, B:Serialize> {
-    s: Tree,
+pub struct StatTsDecorator<Space, B> {
+    s: Space,
     stats: PerfProfilePoint,
     t_start: SystemTime,
     nb_sols: u64,
@@ -59,9 +59,9 @@ pub struct StatTsDecorator<Tree, B:Serialize> {
     logging_id_obj: Option<usize>,
 }
 
-impl<N,G,Tree,B> GuidedSpace<N,G> for StatTsDecorator<Tree,B>
+impl<N,G,Space,B> GuidedSpace<N,G> for StatTsDecorator<Space,B>
 where 
-    Tree: GuidedSpace<N,G>,
+    Space: GuidedSpace<N,G>,
     B: Serialize
 {
     fn guide(&mut self, node: &N) -> G {
@@ -79,9 +79,9 @@ where Space:ToSolution<N,Sol>, B:serde::Serialize {
 }
 
 
-impl<N,Tree,B> SearchSpace<N,B> for StatTsDecorator<Tree,B>
+impl<N,Space,B> SearchSpace<N,B> for StatTsDecorator<Space,B>
 where 
-    Tree: SearchSpace<N,B>,
+    Space: SearchSpace<N,B>,
     B: Clone+Serialize+Into<i64>
 {
 
@@ -220,9 +220,9 @@ where
 }
 
 
-impl<N, Tree, B> TotalNeighborGeneration<N> for StatTsDecorator<Tree,B>
+impl<N, Space, B> TotalNeighborGeneration<N> for StatTsDecorator<Space,B>
 where 
-    Tree: TotalNeighborGeneration<N>,
+    Space: TotalNeighborGeneration<N>,
     B: Serialize,
 {
 
@@ -246,9 +246,9 @@ where
     }
 }
 
-impl<N, Tree, B> PartialNeighborGeneration<N> for StatTsDecorator<Tree,B>
+impl<N, Space, B> PartialNeighborGeneration<N> for StatTsDecorator<Space,B>
 where 
-    Tree: PartialNeighborGeneration<N>,
+    Space: PartialNeighborGeneration<N>,
     B: Serialize,
 {
 
@@ -270,17 +270,21 @@ where
 }
 
 
-impl<N, B, Id, Tree> Identifiable<N, Id> for StatTsDecorator<Tree, B>
+impl<N, B, Id, Space> Identifiable<N, Id> for StatTsDecorator<Space, B>
 where
-    Tree: Identifiable<N, Id>,
+    Space: Identifiable<N, Id>,
     B: Serialize,
 {
     fn id(&self, n: &N) -> Id { self.s.id(n) }
 }
 
-impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
+impl<Space, B> SearchSpaceDecorator<Space> for StatTsDecorator<Space, B> {
+    fn unwrap(&self) -> &Space { &self.s }
+}
+
+impl<Space, B:Serialize+Copy+Display> StatTsDecorator<Space, B> {
     /** builds the decorator around a search space */
-    pub fn new(s: Tree) -> Self {
+    pub fn new(s: Space) -> Self {
         Self {
             s,
             stats: PerfProfilePoint::new(),
@@ -292,9 +296,6 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
             logging_id_obj: None,
         }
     }
-
-    /** unwraps itself */
-    pub fn unwrap(&self) -> &Tree { &self.s }
 
     /** binds to a logger (to display statistics in the console) */
     pub fn bind_logger(mut self, logger_ref:Weak<MetricLogger>) -> Self {
@@ -339,9 +340,9 @@ impl<Tree, B:Serialize+Copy+Display> StatTsDecorator<Tree, B> {
 }
 
 
-impl<N,Tree,B> ParetoDominanceSpace<N> for StatTsDecorator<Tree, B>
+impl<N,Space,B> ParetoDominanceSpace<N> for StatTsDecorator<Space, B>
 where 
-    Tree: ParetoDominanceSpace<N>,
+    Space: ParetoDominanceSpace<N>,
     B: Serialize,
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }

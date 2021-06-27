@@ -5,7 +5,7 @@ use std::hash::Hash;
 use fxhash::FxHashMap;
 
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
-
+use crate::search_decorator::SearchSpaceDecorator;
 
 /**
 implements a dominance information used to represent a previous state (g-cost and iter number)
@@ -161,6 +161,10 @@ where
         if self.store.is_dominated_or_add(pe, bound, self.current_iter) { Vec::new() }
         else { self.s.neighbors(node) }
     }
+}
+
+impl<Space, Id, B> SearchSpaceDecorator<Space> for GcostDominanceTsDecorator<Space, Id, B> {
+    fn unwrap(&self) -> &Space { &self.s }
 }
 
 

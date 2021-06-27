@@ -1,5 +1,5 @@
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
-
+use crate::search_decorator::SearchSpaceDecorator;
 
 /**
 pruning decorator: stores the best known solution and counts the number of prunings for statistics.
@@ -98,11 +98,12 @@ where
     }
 }
 
+impl<Space, B> SearchSpaceDecorator<Space> for PruningDecorator<Space, B> {
+    fn unwrap(&self) -> &Space { &self.s }
+}
+
 
 impl<Space, B> PruningDecorator<Space, B> {
-    /** unwraps itself */
-    pub fn unwrap(&self) -> &Space { &self.s }
-
     /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         Self {s, best_val: None, nb_prunings: 0}

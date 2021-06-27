@@ -46,6 +46,11 @@ Implements the metric logger. Allows the algorithm to display logs of its perfor
 */
 pub mod metric_logger;
 
+/**
+Search space decorator traits + procedural macros
+*/
+pub mod search_decorator;
+
 
 ///! directories
 

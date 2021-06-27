@@ -2,19 +2,19 @@
 pub mod helper;
 
 /** beam search search */
-pub mod beamsearch;
+pub mod beam_search;
 
 /** Depth First Search */
-pub mod dfs;
+pub mod depth_first;
 
 /** Best First Search */
-pub mod bestfirst;
+pub mod best_first;
 
 /** Beam Search with node pareto dominance */
-pub mod beamsearch_dom;
+pub mod beam_search_dom;
 
 /** Beam Search using partial neighborhood expansion */
-pub mod pe_beamsearch;
+pub mod beam_search_pe;
 
 /** Greedy algorithm using partial neighborhood expansion */
-pub mod pe_greedy;
+pub mod greedy_pe;

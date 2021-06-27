@@ -1,15 +1,19 @@
 use min_max_heap::MinMaxHeap;
 use std::cmp::{Ord, PartialOrd};
+use std::marker::PhantomData;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::search_manager::SearchManager;
-use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, ParetoDominanceSpace};
-
+use crate::search_algorithm::{StoppingCriterion, SearchAlgorithm};
 use crate::tree_search::algo::helper::guided_node::GuidedNode;
+use crate::search_space::{
+    SearchSpace, GuidedSpace, TotalNeighborGeneration, ParetoDominanceSpace
+};
 
 /**
  * implements beam dominance schemes. i.e. the policy to keep track of "elite" nodes that will be
  * used to eliminate dominated nodes.
- * TODO: replace with the new beam search format
  */
 #[derive(Debug, Clone)]
 pub enum BeamDominanceScheme {
@@ -19,64 +23,69 @@ pub enum BeamDominanceScheme {
 
 /** beam search with pareto-dominance scheme */
 #[derive(Debug)]
-pub struct BeamSearchDom<'a, Tree, N, B> {
-    /// search manager
-    pub manager: SearchManager<N, B>,
-    space: &'a mut Tree,
+pub struct BeamSearchDom<N, B, G, Space> {
+    manager: SearchManager<N, B>,
+    space: Rc<RefCell<Space>>,
     d: usize,
     heuristic_pruning_done: bool,
     beam_dominance_scheme: BeamDominanceScheme,
+    g: PhantomData<G>,
 }
 
-impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
+impl<Space, N:Clone, B:PartialOrd+Copy, G:Ord> BeamSearchDom<N, B, G, Space> {
     /** builds the beam search using the search space, the beam width, and the dominance scheme */
-    pub fn new(space: &'a mut Tree, d: usize, dom_scheme:BeamDominanceScheme) -> Self {
+    pub fn new(space: Rc<RefCell<Space>>, d: usize, dom_scheme:BeamDominanceScheme) -> Self {
         Self {
             manager: SearchManager::default(),
             space,
             d,
             heuristic_pruning_done: false,
-            beam_dominance_scheme: dom_scheme
+            beam_dominance_scheme: dom_scheme,
+            g: PhantomData,
         }
     }
+}
 
-    pub fn is_heuristic_pruning_done(&self) -> bool { self.heuristic_pruning_done }
-
-    pub fn run<G: Ord+Clone>(&mut self, stopping_criterion: impl Fn(&SearchManager<N, B>) -> bool)
-    where
-        Tree: SearchSpace<N,B>+GuidedSpace<N,G>+TotalNeighborGeneration<N>+ParetoDominanceSpace<N>,
-    {
+impl<'a, N, B, G, Space> SearchAlgorithm<N, B> for BeamSearchDom<N, B, G, Space>
+where
+    N: Clone,
+    B: PartialOrd+Copy,
+    G: Ord+Clone,
+    Space: SearchSpace<N,B> + GuidedSpace<N,G> + TotalNeighborGeneration<N> + ParetoDominanceSpace<N>,
+{
+    fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC) {
+        let mut space = self.space.borrow_mut();
         let mut beam = MinMaxHeap::with_capacity(self.d);
-        let root = self.space.initial();
-        let g_root = self.space.guide(&root);
+        let root = space.initial();
+        let g_root = space.guide(&root);
         self.heuristic_pruning_done = false;
         beam.push(GuidedNode::new(root, g_root));
-        while stopping_criterion(&self.manager) && !beam.is_empty() {
+        while !stopping_criterion.is_finished() && !beam.is_empty() {
             let mut next_beam = MinMaxHeap::with_capacity(self.d);
             let mut elites:MinMaxHeap<GuidedNode<N,G>> = MinMaxHeap::new();
-            while !beam.is_empty() && stopping_criterion(&self.manager) {
+            while !beam.is_empty() && !stopping_criterion.is_finished() {
                 let mut n = beam.pop_min().unwrap().node;
                 // check if goal
-                if self.space.goal(&n) {
+                if space.goal(&n) {
                     // compare with best
-                    let v = self.space.bound(&n);
+                    let v = space.bound(&n);
                     if self.manager.is_better(v) {
-                        let n2 = self.space.handle_new_best(n);
+                        let n2 = space.handle_new_best(n);
                         n = n2.clone();
-                        let b2 = self.space.bound(&n2);
+                        let b2 = space.bound(&n2);
                         self.manager.update_best(n2, b2);
                     }
                 }
-                let mut children = self.space.neighbors(&mut n);
+                let mut children = space.neighbors(&mut n);
                 while !children.is_empty() {
                     let c = children.pop().unwrap();
                     // check if goal
-                    if self.space.goal(&c) {
+                    if space.goal(&c) {
                         // compare with best
-                        let v = self.space.bound(&c);
+                        let v = space.bound(&c);
                         if self.manager.is_better(v) {
-                            let c2 = self.space.handle_new_best(c);
-                            let b2 = self.space.bound(&c2);
+                            let c2 = space.handle_new_best(c);
+                            let b2 = space.bound(&c2);
                             self.manager.update_best(c2, b2);
                         }
                         continue;
@@ -84,13 +93,13 @@ impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
                     // check if n is dominated by the elite set
                     let mut is_dominated = false;
                     for e in elites.iter() {
-                        if self.space.dominates(&e.node, &c) {
+                        if space.dominates(&e.node, &c) {
                             is_dominated = true;
                             continue;
                         }
                     }
                     if !is_dominated {
-                        let c_guide = self.space.guide(&c);
+                        let c_guide = space.guide(&c);
                         // possibly: add n to the elite set
                         let BeamDominanceScheme::Fixed(elite_max_size) = self.beam_dominance_scheme;
                         if elites.len() < elite_max_size {
@@ -111,6 +120,13 @@ impl<'a, Tree, N:Clone, B:PartialOrd+Copy> BeamSearchDom<'a, Tree, N, B> {
             }
             beam = next_beam;
         }
-        self.space.stop_search("".to_string());
+        space.stop_search("".to_string());
     }
+
+    fn get_manager(&mut self) -> &mut SearchManager<N, B> { &mut self.manager }
+
+    /**
+     * returns true if the optimal value is found (thus we can stop the search)
+     */
+    fn is_optimal(&self) -> bool { !self.heuristic_pruning_done }
 }

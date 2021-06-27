@@ -16,17 +16,17 @@ use crate::tree_search::algo::helper::iterative::IterativeSearch;
 beam search algorithm structure
 */
 #[derive(Debug)]
-pub struct BeamSearch<N, B, G, Tree> {
-    /// search manager
-    pub manager: SearchManager<N, B>,
-    space: Rc<RefCell<Tree>>,
+pub struct BeamSearch<N, B, G, Space> {
+    manager: SearchManager<N, B>,
+    space: Rc<RefCell<Space>>,
     d: usize,
     heuristic_pruning_done: bool,
-    g: PhantomData<G>,}
+    g: PhantomData<G>,
+}
 
-impl<N:Clone, B:PartialOrd+Copy, G, Tree> BeamSearch<N, B, G, Tree> {
+impl<N:Clone, B:PartialOrd+Copy, G, Space> BeamSearch<N, B, G, Space> {
     /** builds the beam search given a search space and a beam width */
-    pub fn new(space: Rc<RefCell<Tree>>, d: usize) -> Self {
+    pub fn new(space: Rc<RefCell<Space>>, d: usize) -> Self {
         Self {
             manager: SearchManager::default(),
             space,
@@ -38,17 +38,16 @@ impl<N:Clone, B:PartialOrd+Copy, G, Tree> BeamSearch<N, B, G, Tree> {
 }
 
 
-impl<'a, N, B, G:Ord, Tree> SearchAlgorithm<N, B> for BeamSearch<N, B, G, Tree>
+impl<'a, N, B, G:Ord, Space> SearchAlgorithm<N, B> for BeamSearch<N, B, G, Space>
 where
     N: Clone,
     B: PartialOrd+Copy,
-    Tree: SearchSpace<N,B> + GuidedSpace<N,G> + TotalNeighborGeneration<N>,
+    Space: SearchSpace<N,B> + GuidedSpace<N,G> + TotalNeighborGeneration<N>,
 {
     /**
      * runs until the stopping_criterion is reached
      */
-    fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC)
-    where SC:StoppingCriterion,  {
+    fn run<SC:StoppingCriterion>(&mut self, stopping_criterion:SC) {
         let mut space = self.space.borrow_mut();
         let mut beam = MinMaxHeap::with_capacity(self.d);
         let root = space.initial();
@@ -107,9 +106,9 @@ where
     fn is_optimal(&self) -> bool { !self.heuristic_pruning_done }
 }
 
-impl<N, B, G, Tree> BuildableWithInteger<Tree> for BeamSearch<N, B, G, Tree>
+impl<N, B, G, Space> BuildableWithInteger<Space> for BeamSearch<N, B, G, Space>
 where N:Clone, B:PartialOrd+Copy {
-    fn create_with_integer(tree: Rc<RefCell<Tree>>, d:usize) -> Self {
+    fn create_with_integer(tree: Rc<RefCell<Space>>, d:usize) -> Self {
         Self::new(tree, d)
     }
 }

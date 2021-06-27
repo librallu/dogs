@@ -69,6 +69,13 @@ We recommend using use [heaptrack](https://github.com/KDE/heaptrack).
 2. Analyze data `heaptrack_gui DATA.gz`
 
 
+### Cache performance
+
+We recommend using Valgrind
+
+1. `valgrind --tool=callgrind --dump-instr=yes --collect-jumps=yes --simulate-cache=yes [PROGRAM] [ARGS]`
+
+
 ### Iterating over files (Linux)
 
 ```bash

@@ -1,6 +1,6 @@
 //! Discrete Optimization Global Search framework
 
-//! useful additional warnings if docs are missing, or crates imported but unused, etc.
+// useful additional warnings if docs are missing, or crates imported but unused, etc.
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 #![warn(trivial_casts, trivial_numeric_casts)]
@@ -8,7 +8,7 @@
 #![warn(unused_extern_crates)]
 #![warn(variant_size_differences)]
 
-//! not sure if already by default in clippy
+// not sure if already by default in clippy
 #![warn(clippy::similar_names)]
 #![warn(clippy::print_stdout)]
 #![warn(clippy::use_debug)]
@@ -16,16 +16,16 @@
 #![warn(clippy::shadow_same)]
 #![warn(clippy::shadow_reuse)]
 
-//! checks integer arithmetic in the project
+// checks integer arithmetic in the project
 // #![warn(clippy::integer_arithmetic)]
 
-//! these flags can be useful, but will indicate normal behavior
+// these flags can be useful, but will indicate normal behavior
 // #![warn(clippy::cast_possible_truncation)]
 // #![warn(clippy::cast_possible_wrap)]
 // #![warn(clippy::cast_precision_loss)]
 // #![warn(clippy::cast_sign_loss)]
 
-///! files
+// files
 /**
 SearchAlgorithm trait definition + StoppingCriterion trait with some useful stopping criteria
 */ 
@@ -52,7 +52,7 @@ Search space decorator traits + procedural macros
 pub mod search_decorator;
 
 
-///! directories
+// directories
 
 /**
 includes tree search algorithms

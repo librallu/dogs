@@ -82,7 +82,7 @@ where Space:ToSolution<N,Sol>, B:serde::Serialize {
 impl<N,Space,B> SearchSpace<N,B> for StatTsDecorator<Space,B>
 where 
     Space: SearchSpace<N,B>,
-    B: Clone+Serialize+Into<i64>
+    B: Clone+Serialize+Into<i64>+PartialOrd+Copy
 {
 
     fn initial(&mut self) -> N {
@@ -114,17 +114,17 @@ where
 
     fn handle_new_best(&mut self, n: N) -> N {
         // update before handle best
-        let obj = self.s.bound(&n);
+        let obj1 = self.s.bound(&n);
         self.nb_sols += 1;
         self.perfprofile.push(PerfProfileEntry {
             p: self.stats.clone(),
             t: self.t_start.elapsed().unwrap().as_secs_f32(),
-            v: Some(obj.clone())
+            v: Some(obj1)
         });
         // updates logger and display statistics
         if let Some(logger) = self.logger.upgrade() {
             if let Some(id) = self.logging_id_obj {
-                logger.update_metric(id, Metric::Int(obj.into()));
+                logger.update_metric(id, Metric::Int(obj1.into()));
                 logger.request_logging();
             }
         }
@@ -135,13 +135,15 @@ where
         self.perfprofile.push(PerfProfileEntry {
             p: self.stats.clone(),
             t: self.t_start.elapsed().unwrap().as_secs_f32(),
-            v: Some(obj2.clone())
+            v: Some(obj2)
         });
         // updates logger and display statistics
-        if let Some(logger) = self.logger.upgrade() {
-            if let Some(id) = self.logging_id_obj {
-                logger.update_metric(id, Metric::Int(obj2.into()));
-                logger.request_logging();
+        if obj2 < obj1 {
+            if let Some(logger) = self.logger.upgrade() {
+                if let Some(id) = self.logging_id_obj {
+                    logger.update_metric(id, Metric::Int(obj2.into()));
+                    logger.request_logging();
+                }
             }
         }
         n2
@@ -155,7 +157,7 @@ where
             t: self.t_start.elapsed().unwrap().as_secs_f32(),
             v: match self.perfprofile.len() {
                 0 => None,
-                n => self.perfprofile[n-1].v.clone()
+                n => self.perfprofile[n-1].v
             }
         });
     }

@@ -125,7 +125,7 @@ pub trait Identifiable<N, Id> {
     /**
         returns the ID of the node
      */
-    fn id(&self, n: &N) -> Id;
+    fn id(&self, n: &mut N) -> Id;
 }
 
 

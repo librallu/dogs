@@ -114,7 +114,7 @@ impl<N, B, Id, Space> Identifiable<N, Id> for PruningDecorator<Space, B>
 where
     Space: Identifiable<N, Id>,
 {
-    fn id(&self, n: &N) -> Id { self.s.id(n) }
+    fn id(&self, n: &mut N) -> Id { self.s.id(n) }
 }
 
 

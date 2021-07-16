@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::{Weak, Rc};
 use std::cmp::max;
 use serde::{Serialize};
+use std::marker::PhantomData;
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
@@ -184,21 +185,23 @@ where B:Ord+Display+Clone+Copy+Into<i64> {
  *  - TODO when a node bound is updated: update the global bound
  */
 #[derive(Debug)]
-pub struct BoundingDecorator<Space, B> {
+pub struct BoundingDecorator<Space, B, N> {
     /// wrapped search space
     s: Space,
     /// bound set to measure the bound
     bound_set: Rc<RefCell<BoundSet<B>>>,
+    /// phantom for the node type (N)
+    phantom_n: PhantomData<N>,
 }
 
 
-impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Space, B>
+impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Space, B, N>
 where Space:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
 {
     fn guide(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> G { self.s.guide(&n.node) }
 }
 
-impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Space, B>
+impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Space, B, N>
 where
     Space: SearchSpace<N,B>+ToSolution<N,Sol>,
     B:Ord+Display+Copy+Into<i64>
@@ -209,7 +212,7 @@ where
 }
 
 
-impl<N,Space,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingDecorator<Space, B>
+impl<N,Space,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingDecorator<Space, B, N>
 where
     N:Clone,
     Space:SearchSpace<N,B>,
@@ -281,7 +284,7 @@ where
     }
 }
 
-impl<N, B, Space> TotalNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B>
+impl<N, B, Space> TotalNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B, N>
 where
     Space: TotalNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Display+Copy+Into<i64>
@@ -306,19 +309,23 @@ where
 }
 
 
-impl<Space, B> SearchSpaceDecorator<Space> for BoundingDecorator<Space, B> {
+impl<Space, B, N> SearchSpaceDecorator<Space> for BoundingDecorator<Space, B, N> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
 
-impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
+impl<Space, B, N> BoundingDecorator<Space, B, N> where B:Ord+Display+Copy+Into<i64> {
     /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
     /** builds the decorator using the wrapped space */
-    pub fn new<N>(s: Space) -> Self
+    pub fn new(s: Space) -> Self
     where B:Ord+Into<i64> {
-        Self {s, bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new())))}
+        Self {
+            s,
+            bound_set:Rc::new(RefCell::new(BoundSet::new(Weak::new()))),
+            phantom_n:PhantomData
+        }
     }
 
     /** insert the bound in the bound set */
@@ -342,21 +349,22 @@ impl<Space, B> BoundingDecorator<Space, B> where B:Ord+Display+Copy+Into<i64> {
 
 }
 
-impl<N, B, Id, Space> Identifiable<N, Id> for BoundingDecorator<Space, B>
+impl<N, B, Id, Space> Identifiable<LifetimeEventNode<N, B, BoundSet<B>>, Id> for BoundingDecorator<Space, B, N>
 where
     Space: Identifiable<N, Id>,
+    B:Ord+Display+Copy+Into<i64>,
 {
-    fn id(&self, n: &N) -> Id { self.s.id(n) }
+    fn id(&self, n: &mut LifetimeEventNode<N, B, BoundSet<B>>) -> Id { self.s.id(&mut n.node) }
 }
 
 
-impl<N,Space,B> ParetoDominanceSpace<N> for BoundingDecorator<Space, B>
+impl<N,Space,B> ParetoDominanceSpace<N> for BoundingDecorator<Space, B, N>
 where Space: ParetoDominanceSpace<N>,
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
-impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B>
+impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B, N>
 where
     Space: PartialNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Copy+Into<i64>+Display

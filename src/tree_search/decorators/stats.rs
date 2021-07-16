@@ -277,7 +277,7 @@ where
     Space: Identifiable<N, Id>,
     B: Serialize,
 {
-    fn id(&self, n: &N) -> Id { self.s.id(n) }
+    fn id(&self, n: &mut N) -> Id { self.s.id(n) }
 }
 
 impl<Space, B> SearchSpaceDecorator<Space> for StatTsDecorator<Space, B> {

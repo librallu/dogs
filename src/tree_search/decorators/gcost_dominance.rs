@@ -197,9 +197,9 @@ where
     fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
         match self.s.next_neighbor(node) {
             None => { None },
-            Some(c) => {
+            Some(mut c) => {
                 // checks if c is dominated
-                let id = self.s.id(&c);
+                let id = self.s.id(&mut c);
                 let prefix_bound = self.s.g_cost(&c);
                 if self.store.is_dominated_or_add(id, prefix_bound, self.current_iter) {
                     self.next_neighbor(node) // if node dominated, try another one

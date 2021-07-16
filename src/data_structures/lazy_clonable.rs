@@ -90,19 +90,19 @@ mod tests {
     fn simple_construct() {
         let mut a = LazyClonable::new(42);
         // a.is_cloned() should be true because it is passed the initial value
-        assert_eq!(a.is_cloned(), true);
-        assert_eq!(*(a.lazy_get().as_ref()) == 42, true);
+        assert!(a.is_cloned());
+        assert_eq!(*(a.lazy_get().as_ref()), 42);
     }
 
     #[test]
     fn simple_clone() {
         let a = LazyClonable::new(42);
         // a.is_cloned() should be true because it is passed the initial value
-        assert_eq!(a.is_cloned(), true);
+        assert!(a.is_cloned());
         let mut b = a.lazy_clone();
-        assert_eq!(b.is_cloned(), false);
+        assert!(!b.is_cloned());
         assert_eq!(*b.lazy_get().as_ref(), 42);
-        assert_eq!(b.is_cloned(), true);
+        assert!(b.is_cloned());
     }
 }
 

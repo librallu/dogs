@@ -119,7 +119,7 @@ impl<N, B, Id, Space, D, G> Identifiable<DiscrepancyNode<N>, Id> for LDSDecorato
 where
     Space: Identifiable<N, Id>,
 {
-    fn id(&self, n: &DiscrepancyNode<N>) -> Id { self.s.id(&n.node) }
+    fn id(&self, n: &mut DiscrepancyNode<N>) -> Id { self.s.id(&mut n.node) }
 }
 
 impl<N,Space,D,G,B> ParetoDominanceSpace<DiscrepancyNode<N>> for LDSDecorator<Space, D, G, B>

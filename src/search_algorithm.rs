@@ -2,6 +2,8 @@ use std::time::SystemTime;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use serde_json::json;
+
 use crate::search_manager::SearchManager;
 
 /**
@@ -63,6 +65,11 @@ pub trait SearchAlgorithm<N, B> {
      * returns true if the optimal value is found (thus we can stop the search). False by default
      */
     fn is_optimal(&self) -> bool { false }
+
+    /**
+    provides various statistics of events that occured during the search.
+    */
+    fn json_statistics(&self, json:&mut serde_json::Value) { json["is_optimal"] = json!(self.is_optimal()) }
 }
 
 /**

@@ -26,10 +26,13 @@ See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 
 ### Roadmap: What's next?
 
-- [ ] Replace display statistics by a function that displays statistics from export stats (JSON format)
+- [ ] Each component (Search algorithm, decorator, ... can produce a JSON object)
+    This JSON object can then be written in a file or combined with others by higher components.
 - [ ] Use Iterator trait for partial expansion (more idiomatic)
 - [ ] Performance improvement for the PruningDecorator
 - [ ] Add Decorator trait and base implementation for unwrap()
+- [ ] improve LazyComputable usage (trait?)
+
 
 ## examples
 

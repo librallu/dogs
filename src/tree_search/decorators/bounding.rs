@@ -100,7 +100,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
             self.global_bound = Some(*b);
             if let Some(logger) = self.logger.upgrade() {
                 if let Some(id) = self.logging_id_bound {
-                    logger.update_metric(id, Metric::Int(b.clone().into()));
+                    logger.update_metric(id, Metric::Int((*b).into()));
                 }
             }
         }
@@ -157,7 +157,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
                     if let Some(id) = self.logging_id_bound {
                         let metric = match self.global_bound {
                             None => Metric::Text("infeasible".to_string()),
-                            Some(v) => Metric::Int(v.clone().into()),
+                            Some(v) => Metric::Int(v.into()),
                         };
                         logger.update_metric(id, metric);
                         // logger.request_logging();
@@ -266,21 +266,21 @@ where
     fn display_statistics(&self) {
         println!();
         match self.bound_set.borrow().global_bound {
-            None => println!("{:>25}{:>15}", "global dual bound", "infeasible"),
-            Some(v) => println!("{:>25}{:>15}", "global dual bound", v),
+            None => println!("{:>25}{:>15}", "dual bound", "infeasible"),
+            Some(v) => println!("{:>25}{:>15}", "dual bound", v),
         }
         println!();
         self.s.display_statistics();
     }
 
-    fn export_statistics(&self, json:&mut serde_json::Value) {
+    fn json_statistics(&self, json:&mut serde_json::Value) {
         match self.bound_set.borrow().global_bound {
             None => {},
             Some(v) => {
-                json["global_dual_bound"] = serde_json::json!(v)
+                json["dual_bound"] = serde_json::json!(v)
             }
         }
-        self.s.export_statistics(json);
+        self.s.json_statistics(json);
     }
 }
 

@@ -1,4 +1,14 @@
-use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
+use serde_json::json;
+
+use crate::search_space::{
+    SearchSpace,
+    GuidedSpace,
+    TotalNeighborGeneration,
+    PartialNeighborGeneration,
+    Identifiable,
+    ParetoDominanceSpace,
+    ToSolution
+};
 use crate::search_decorator::SearchSpaceDecorator;
 
 /**
@@ -65,9 +75,13 @@ where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd+Clone
         self.s.display_statistics();
     }
 
-    fn export_statistics(&self, json:&mut serde_json::Value) {
+    fn json_statistics(&self, json:&mut serde_json::Value) {
         json["nb_pruned"] = serde_json::json!(self.nb_prunings);
-        self.s.export_statistics(json);
+        match &self.best_val {
+            None => {},
+            Some(v) => { json["primal_bound"] = json!(v); }
+        }
+        self.s.json_statistics(json);
     }
 }
 

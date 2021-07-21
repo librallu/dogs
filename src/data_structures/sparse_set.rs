@@ -105,13 +105,13 @@ mod tests {
         set.insert(5);
         set.insert(7);
         set.insert(9);
-        assert_eq!(set.contains(5), true);
-        assert_eq!(set.contains(7), true);
-        assert_eq!(set.contains(9), true);
-        assert_eq!(set.contains(0), false);
-        assert_eq!(set.contains(1), false);
-        assert_eq!(set.contains(2), false);
-        assert_eq!(set.contains(3), false);
+        assert!(set.contains(5));
+        assert!(set.contains(7));
+        assert!(set.contains(9));
+        assert!(!set.contains(0));
+        assert!(!set.contains(1));
+        assert!(!set.contains(2));
+        assert!(!set.contains(3));
     }
 
     #[test]
@@ -119,13 +119,13 @@ mod tests {
         let mut set = SparseSet::new(10);
         set.insert(5);
         set.insert(7);
-        assert_eq!(set.contains(5), true);
-        assert_eq!(set.contains(7), true);
-        assert_eq!(set.contains(3), false);
+        assert!(set.contains(5));
+        assert!(set.contains(7));
+        assert!(!set.contains(3));
         set.remove(5);
-        assert_eq!(set.contains(5), false);
-        assert_eq!(set.contains(7), true);
-        assert_eq!(set.contains(3), false);
+        assert!(set.contains(7));
+        assert!(!set.contains(5));
+        assert!(!set.contains(3));
     }
 
     #[test]
@@ -134,13 +134,13 @@ mod tests {
         set.insert(5);
         set.insert(7);
         set.insert(3);
-        assert_eq!(set.contains(5), true);
-        assert_eq!(set.contains(7), true);
-        assert_eq!(set.contains(3), true);
+        assert!(set.contains(5));
+        assert!(set.contains(7));
+        assert!(set.contains(3));
         set.remove_all_but_one(3);
-        assert_eq!(set.contains(5), false);
-        assert_eq!(set.contains(7), false);
-        assert_eq!(set.contains(3), true);
+        assert!(!set.contains(5));
+        assert!(!set.contains(7));
+        assert!(set.contains(3));
     }
 
 }

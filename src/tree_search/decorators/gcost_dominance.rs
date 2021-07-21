@@ -84,10 +84,10 @@ impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
 
     /** exports statistics to a JSON format */
     pub fn export_statistics(&self, json:&mut serde_json::Value) {
-        json["pe_nb_elts"] = serde_json::json!(self.store.len());
-        json["pe_nb_gets"] = serde_json::json!(self.nb_gets);
-        json["pe_nb_pruned"] = serde_json::json!(self.nb_dominations);
-        json["pe_nb_updates"] = serde_json::json!(self.nb_updates);
+        json["gcost_dom_nb_elts"] = serde_json::json!(self.store.len());
+        json["gcost_dom_nb_gets"] = serde_json::json!(self.nb_gets);
+        json["gcost_dom_nb_pruned"] = serde_json::json!(self.nb_dominations);
+        json["gcost_dom_nb_updates"] = serde_json::json!(self.nb_updates);
     }
 }
 
@@ -142,9 +142,9 @@ where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd, Id:Hash+Eq
         self.s.display_statistics();
     }
 
-    fn export_statistics(&self, json:&mut serde_json::Value) {
+    fn json_statistics(&self, json:&mut serde_json::Value) {
         self.store.export_statistics(json);
-        self.s.export_statistics(json);
+        self.s.json_statistics(json);
     }
 }
 

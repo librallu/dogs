@@ -60,7 +60,7 @@ pub trait SearchSpace<N,B> {
     /**
      registers information about the search statistics in a json file
      */
-    fn export_statistics(&self, _json:&mut serde_json::Value) {}
+    fn json_statistics(&self, _json:&mut serde_json::Value) {}
 
     /**
      * requests log headers (does nothing if there is no logging decorator within the algorithm)

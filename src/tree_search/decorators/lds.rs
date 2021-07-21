@@ -91,8 +91,8 @@ where Space:SearchSpace<N,B>
         self.s.display_statistics();
     }
 
-    fn export_statistics(&self, json:&mut serde_json::Value) {
-        self.s.export_statistics(json);
+    fn json_statistics(&self, json:&mut serde_json::Value) {
+        self.s.json_statistics(json);
     }
 }
 

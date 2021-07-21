@@ -82,7 +82,7 @@ where Space:ToSolution<N,Sol>, B:serde::Serialize {
 impl<N,Space,B> SearchSpace<N,B> for StatTsDecorator<Space,B>
 where 
     Space: SearchSpace<N,B>,
-    B: Clone+Serialize+Into<i64>+PartialOrd+Copy
+    B: Clone+Serialize+Into<i64>+PartialOrd+Copy+std::fmt::Display
 {
 
     fn initial(&mut self) -> N {
@@ -162,7 +162,7 @@ where
         });
     }
 
-    fn export_statistics(&self, json:&mut serde_json::Value) {
+    fn json_statistics(&self, json:&mut serde_json::Value) {
         let time = self.t_start.elapsed().unwrap().as_secs_f32();
         json["nb_generated"] = serde_json::json!(self.stats.generated);
         json["nb_expanded"] = serde_json::json!(self.stats.expanded);
@@ -175,7 +175,8 @@ where
         json["time_searched"] = serde_json::json!(time);
         json["nodes_generated_per_sec"] = serde_json::json!((self.stats.generated as f32) / time);
         json["nb_sols_created"] = serde_json::json!(self.stats.solutions);
-        self.s.export_statistics(json);
+        json["primal_pareto_diagram"] = self.get_pareto_diagram();
+        self.s.json_statistics(json);
     }
 
     fn display_statistics(&self) {

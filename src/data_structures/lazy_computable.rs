@@ -6,12 +6,12 @@ This object is similar to a [https://doc.rust-lang.org/std/borrow/enum.Cow.html]
 Initially, it stores a reference with a "parent" object. When a get or get_mut is called,
 a computation occurs if needed.
 */
-#[derive(Debug, Clone)]
-pub enum LazyComputable<T:Clone> {
+#[derive(Debug)]
+pub enum LazyComputable<Parent, Type> {
     /// reference to the "parent" element
-    Ref(Rc<T>),
+    Ref(Rc<Parent>),
     /// reference to "itself"
-    Computed(Rc<T>)
+    Computed(Rc<Type>)
 }
 
 /**

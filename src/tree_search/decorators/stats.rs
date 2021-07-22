@@ -95,9 +95,6 @@ where
         self.s.bound(node)
     }
 
-    /**
-     * TODO maybe have a g_cost stat?
-     */
     fn g_cost(&mut self, node: &N) -> B {
         self.stats.eval += 1;
         self.s.g_cost(node)
@@ -176,6 +173,10 @@ where
         json["nodes_generated_per_sec"] = serde_json::json!((self.stats.generated as f32) / time);
         json["nb_sols_created"] = serde_json::json!(self.stats.solutions);
         json["primal_pareto_diagram"] = self.get_pareto_diagram();
+        match self.perfprofile.last() {
+            None => {},
+            Some(v) => { json["best_primal"] = json!(v.v); }
+        }
         self.s.json_statistics(json);
     }
 
@@ -329,11 +330,11 @@ impl<Space, B:Serialize+Copy+Display> StatTsDecorator<Space, B> {
                 "trashed": e.p.trashed,
                 "solutions": e.p.solutions,
                 "guide": e.p.guide,
-                "t": e.t
+                "time": e.t
             });
             match e.v {
                 None => {},
-                Some(v) => tmp["v"] = json!(v)
+                Some(v) => tmp["primal"] = json!(v)
             };
             points.push(tmp);
         }

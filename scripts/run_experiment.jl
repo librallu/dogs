@@ -15,22 +15,6 @@ function read_csv(csv_filename)
     return CSV.File(csv_filename)
 end
 
-# """
-# concat paths a and b (both should be relative)
-# if remove_last=true: remove b last path element
-# """
-# function concat_paths(a,b,remove_last=false)
-#     res = a
-#     c = splitpath(c)
-#     if remove_last
-#         c = pop!(c)
-#     end
-#     for d in c
-
-#     end
-#     return normpath(a+b)
-# end
-
 function parse_commandline()
     s = ArgParseSettings(
         description="runs an experiment defined by a .toml file"
@@ -72,7 +56,13 @@ end
 function main()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     # read command line
-    parsed_args = parse_commandline()
+    # parsed_args = parse_commandline()
+    # debug comment (otherwise JIT compilation is way too slow!)
+    parsed_args = Dict(
+        "configuration" => "scripts/examples/test_experiment.toml",
+        "debug" => "true"
+    )
+    ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]
     pad = 20
@@ -89,8 +79,15 @@ function main()
     # read instance .csv file
     println(YELLOW_FG("READING CSV ($(common["instance_csv_filename"]))..."))
     # instances = read_csv(configuration["instance_filenames"])
-    instances = read_csv(common["instance_csv_filename"])
+    instances_csv = read_csv(common["instance_csv_filename"])
+    insts = zip(instances_csv.path, instances_csv.time_limit)
     # generate and execute commands (cartesian product on instances, algos with params)
+    println(YELLOW_FG("RUNNING EXPERIMENTS..."))
+    solver_variants = []
+    for solver in keys(configuration["solvers"])
+        # TODO recursively reads the solver configuration and generates configurations
+        println(solver)
+    end
     # generate analysis
 end
 main()

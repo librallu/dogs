@@ -11,7 +11,7 @@ nb_parallel_tasks = 4
 #   - *time_limit:* time (in seconds) allowed to solve the instance
 # any other column (including 'path' and 'time_limit') can be accessed in this configuration file
 # by the %{COL_NAME} pattern
-instance_filenames = "../../../dogs-pfsp/insts/taillard_flowtime.csv"
+instance_filenames = "../../../dogs-pfsp/insts/test_taillard.csv"
 
 # output prefix (where to create the result directory)
 output_prefix = "."

@@ -1,0 +1,20 @@
+{
+    "experiment_name":   "test_flowtime",
+    "nb_parallel_tasks": 4,
+    "instance_list":     "../../../dogs-pfsp/insts/test_taillard.csv",
+    "output_prefix":     ".",
+    "solvers": [
+        {
+            "name": "IBS_forward",
+            "exe_path": "../../../dogs-pfsp/target/release/dogs-pfsp",
+            "params": [
+                {"name":"instance", "values":["#{instance_path}"]},
+                {"name":"time",     "values":["#{time_limit}"]},
+                {"name":"perf",     "values":["#{file_prefix}.stats.json"]},
+                {"name":"solution", "values":["#{file_prefix}.sol"]},
+                {"name":"",         "values":["f_flowtime"]},
+                {"name":"guide",    "values":["bound", "idle", "alpha"]}
+            ]
+        }
+    ]
+}

@@ -15,14 +15,14 @@ end
 """
 creates a table of results (best solution for each algorithm)
 """
-function generate_table_of_results(instances_csv, solver_variants, solver_variant_and_instance, output_filename)
-    res = "instance"
+function generate_best_primal_table(instances_csv, solver_variants, solver_variant_and_instance, output_filename)
+    res = "instance,best_known"
     for s in solver_variants
-        res *= s["name"]*","*s["solver_params_compact"]
+        res *= ","*s["name"]*s["solver_params_compact"]
     end
     res *= "\n"
     for inst in instances_csv
-        res *= inst.name
+        res *= inst.name*","*"$(inst.bk_primal)"
         for s in solver_variants
             inst_solver_id = "$(s["name"])$(s["solver_params_compact"])_$(inst.name)"
             output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"

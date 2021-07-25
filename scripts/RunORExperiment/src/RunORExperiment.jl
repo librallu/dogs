@@ -8,7 +8,7 @@ using Crayons.Box
 using IterTools
 using Dates
 
-include("TableOfResults.jl")
+include("BestPrimalTable.jl")
 
 """ reads JSON experiment file """
 function read_configuration(configuration_filename)
@@ -235,12 +235,11 @@ function main()
     for k in keys(solver_variant_and_instance)
         solver_variant_and_instance[k]["stats"] = read_json_output(solver_variant_and_instance[k]["output_file_prefix"])
     end
-    # println(solver_variant_and_instance)
-    TableOfResults.generate_table_of_results(
+    TableOfResults.generate_best_primal_table(
         instances_csv,
         solver_variants,
         solver_variant_and_instance,
-        "$(common["output_directory"])/analysis/table_of_results.csv"
+        "$(common["output_directory"])/analysis/best_primal_bounds.csv"
     )
 end
 main()

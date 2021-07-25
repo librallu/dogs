@@ -218,7 +218,6 @@ function main()
                 println(command)
             else
                 run(`sh -c $command`)
-                println(command)
             end
             id = "$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
             solver_variant_and_instance[id] = Dict(

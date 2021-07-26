@@ -9,6 +9,8 @@ using IterTools
 using Dates
 
 include("BestPrimalTable.jl")
+include("AverageRelativePercentageDeviation.jl")
+include("ParetoDiagram.jl")
 
 """ reads JSON experiment file """
 function read_configuration(configuration_filename)
@@ -90,16 +92,6 @@ function tsp_set(nb_parallel::Int)
     run(`tsp /bin/true`)
     run(`tsp -S $nb_parallel`)
 end
-
-# """ executes a shell command and returns its stdout as a string."""
-# function cmd_run_and_get_stdout(cmd::Cmd)
-#     out = Pipe()
-#     err = Pipe()
-#     process = run(pipeline(ignorestatus(cmd), stdout=out, stderr=err))
-#     close(out.in)
-#     close(err.in)
-#     return String(read(out))
-# end
 
 """ waits the last job to end."""
 function tsp_wait()
@@ -235,11 +227,28 @@ function main()
     for k in keys(solver_variant_and_instance)
         solver_variant_and_instance[k]["stats"] = read_json_output(solver_variant_and_instance[k]["output_file_prefix"])
     end
-    TableOfResults.generate_best_primal_table(
+    # generate best primal table
+    BestPrimalTable.generate_best_primal_table(
         instances_csv,
         solver_variants,
         solver_variant_and_instance,
         "$(common["output_directory"])/analysis/best_primal_bounds.csv"
+    )
+    # generate ARPD table
+    AverageRelativePercentageDeviation.generate_arpd_table(
+        instances_csv,
+        solver_variants,
+        solver_variant_and_instance,
+        "$(common["output_directory"])/analysis/arpd_table.csv"
+    )
+    # generate Pareto diagrams
+    pareto_diagram_path = "$(common["output_directory"])/analysis/pareto_diagrams/"
+    mkpath(pareto_diagram_path)
+    ParetoDiagram.generate_pareto_diagrams(
+        instances_csv,
+        solver_variants,
+        solver_variant_and_instance,
+        pareto_diagram_path
     )
 end
 main()

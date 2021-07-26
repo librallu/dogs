@@ -1,4 +1,4 @@
-module TableOfResults
+module BestPrimalTable
 
 using JSON
 
@@ -13,7 +13,7 @@ end
 
 
 """
-creates a table of results (best solution for each algorithm)
+creates a "best-primal-bound" table (best solution found for each algorithm)
 """
 function generate_best_primal_table(instances_csv, solver_variants, solver_variant_and_instance, output_filename)
     res = "instance,best_known"

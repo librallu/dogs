@@ -22,18 +22,19 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
     # create plot
     output_filename = "$(output_dir)/pareto_diagram_$(inst_class).pdf"
     println(output_filename)
-    p = plot([],[])
-    title!("ARPD relative to time on the class $(inst_class)")
-    xlabel!("time")
-    ylabel!("ARPD")
+    p = plot(fontfamily="serif-roman")
+    title!("ARPD on instances of type `$(inst_class)'")
+    xlabel!("CPU-regularized running time (seconds)")
+    ylabel!("average relative percentage deviation (smaller is better)")
     for solver in keys(solvers_arpd_points)
         points = collect(zip(solvers_arpd_points[solver]...))
         x = collect(points[1])
         y = collect(points[2])
-        plot!(p, x, y, label=solver)
+        plot!(p, x, y, label=solver, linetype=:steppost)
     end
     # export it
-    gr()
+    # gr()
+    pgfplotsx()
     savefig(p, output_filename)
 end
 

@@ -7,3 +7,4 @@ perf
 Flamegraph
 flamegraph
 heaptrack
+optimality

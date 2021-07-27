@@ -14,5 +14,6 @@ for each solver, then generates various performance analysis.
  - [X] Generate Pareto fronts for each instance class
  - [X] add time to best-known
  - [X] add time to optimality proof
- - [ ] add which algorithm is statistically better than the others ARPD (latex & CSV)
+ - [X] add which algorithm is statistically better than the others ARPD
+ - [ ] add latex table for ARPD
  - [ ] Handle single-point multiple primal algorithms

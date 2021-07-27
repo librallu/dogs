@@ -21,7 +21,6 @@ given some arpd point lists, draw the curves
 function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
     # create plot
     output_filename = "$(output_dir)/pareto_diagram_$(inst_class).pdf"
-    println(output_filename)
     p = plot(fontfamily="serif-roman")
     xlabel!("CPU time in seconds on instances of type `$(inst_class)")
     ylabel!("average relative percentage deviation")

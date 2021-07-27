@@ -24,9 +24,25 @@ end
 
 
 """
-creates an average-relative-percentage-deviation table. One row per instance class
+creates an average-relative-percentage-deviation table.
+One row per instance class.
+Generates a CSV file and a latex file.
 """
 function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_instance, output_filename)
+    # tex preembule
+    res_tex = "\\begin{tabular}{c|"
+    for _ in solver_variants
+        res_tex *= "c"
+    end
+    res_tex *= "}\n"
+    res_tex *= "instance class"
+    for s in solver_variants # for each solver
+        solver_name = "$(s["name"])$(s["solver_params_compact"])"
+        solver_name = replace(solver_name, "_"=>"\\_")
+        res_tex *= " & $(solver_name)"
+    end
+    res_tex *= " \\\\ \n\\hline\n"
+    # csv preembule
     res = "instance_class"
     for s in solver_variants
         res *= ","*s["name"]*s["solver_params_compact"]
@@ -48,6 +64,7 @@ function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_
     for inst_class in instance_classes_sorted
         res *= inst_class
         solver_lists = Dict()
+        solver_arpd = Dict()
         for s in solver_variants # for each solver
             arpd = 0
             solver_name = "$(s["name"])$(s["solver_params_compact"])"
@@ -63,6 +80,7 @@ function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_
             end
             arpd = (arpd*100.)/float(length(instance_classes[inst_class]))
             res *= ",$(arpd)"
+            solver_arpd[solver_name] = arpd
         end
         best_wilcoxon = "-"
         for s1 in keys(solver_lists)
@@ -83,11 +101,30 @@ function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_
                 break
             end
         end
+        # update CSV
         res *= ",$(best_wilcoxon)"
         res *= "\n"
+        # update tex
+        res_tex *= "$(inst_class)"
+        for s in solver_variants
+            s_name = "$(s["name"])$(s["solver_params_compact"])"
+            arpd = round(solver_arpd[s_name], digits=2)
+            if best_wilcoxon == s_name
+                res_tex *= " & \\textbf{$(arpd)}"
+            else
+                res_tex *= " & $(arpd)"
+            end
+        end
+        res_tex *= " \\\\ \n"
     end
+    # write CSV
     f = open(output_filename, "w")
     write(f, res)
+    close(f)
+    # write tex
+    res_tex *= "\\end{tabular}"
+    f = open(output_filename*".tex", "w")
+    write(f, res_tex)
     close(f)
 end
 

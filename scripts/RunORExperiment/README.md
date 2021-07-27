@@ -11,5 +11,8 @@ for each solver, then generates various performance analysis.
  - [X] Run the experiments
  - [X] Generate primal bounds table
  - [X] Generate average relative percentage deviation tables
- - [ ] Generate Pareto fronts for each instance class
+ - [X] Generate Pareto fronts for each instance class
+ - [X] add time to best-known
+ - [X] add time to optimality proof
+ - [ ] add which algorithm is statistically better than the others ARPD (latex & CSV)
  - [ ] Handle single-point multiple primal algorithms

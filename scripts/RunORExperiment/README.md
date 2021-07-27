@@ -15,5 +15,6 @@ for each solver, then generates various performance analysis.
  - [X] add time to best-known
  - [X] add time to optimality proof
  - [X] add which algorithm is statistically better than the others ARPD
- - [ ] add latex table for ARPD
+ - [X] add latex table for ARPD
  - [ ] Handle single-point multiple primal algorithms
+ - [ ] Handle external experiments inclusion in the analysis

@@ -2,6 +2,9 @@ module AverageRelativePercentageDeviation
 
 using JSON
 using HypothesisTests
+using Crayons
+using Crayons.Box
+using Statistics
 
 """
 reads a JSON file describing the algorithm performance statistics.
@@ -74,7 +77,14 @@ function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_
                 output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"
                 stats = read_performance_stats(output_file)
                 reference_primal = float(inst.bk_primal)
-                solver_primal = float(stats["best_primal"])
+                if "best_primal" in keys(stats)
+                    solver_primal = float(stats["best_primal"])
+                elseif "primal_list" in keys(stats)
+                    solver_primal = mean(stats["primal_list"])
+                else
+                    println(RED_FG("'best_primal' nor 'primal_list' is found"))
+                    solver_primal = 0.
+                end
                 push!(solver_lists[solver_name], solver_primal)
                 arpd += (solver_primal-reference_primal)/reference_primal
             end

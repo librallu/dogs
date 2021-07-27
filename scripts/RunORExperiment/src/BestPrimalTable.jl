@@ -1,6 +1,8 @@
 module BestPrimalTable
 
 using JSON
+using Crayons
+using Crayons.Box
 
 """
 reads a JSON file describing the algorithm performance statistics.
@@ -54,9 +56,16 @@ function generate_best_primal_table(instances_csv, solver_variants, solver_varia
             output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"
             stats = read_performance_stats(output_file)
             # println(stats)
-            res *= ","*"$(stats["best_primal"])"
-            res *= ","*"$(time_to_objective(stats, inst.bk_primal))"
-            res *= ","*"$(time_to_optimal(stats))"
+            if "best_primal" in keys(stats)
+                res *= ","*"$(stats["best_primal"])"
+                res *= ","*"$(time_to_objective(stats, inst.bk_primal))"
+                res *= ","*"$(time_to_optimal(stats))"
+            elseif "primal_list" in keys(stats)
+                res *= ",$(min(stats["primal_list"]...)),-,-"
+            else
+                println(RED_FG("'best_primal' nor 'primal_list' is found"))
+                res *= ",?,?,?"
+            end
         end
         res *= "\n"
     end

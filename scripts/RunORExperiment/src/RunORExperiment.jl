@@ -141,13 +141,13 @@ function main()
     tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
-    # parsed_args = parse_commandline()
+    parsed_args = parse_commandline()
     ### debug comment (otherwise JIT compilation is way too slow!)
-    parsed_args = Dict(
-        # "configuration" => "../examples/test_flowtime.json",
-        "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
-        "debug" => true
-    )
+    # parsed_args = Dict(
+    #     # "configuration" => "../examples/test_flowtime.json",
+    #     "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+    #     "debug" => true
+    # )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]

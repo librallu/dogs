@@ -36,13 +36,17 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
             tmp = solvers_arpd_points[solver]["multiple_y"]
             x = tmp[1]
             ys = tmp[2]
+            mean_y = mean(ys)
             scatter!(
-                [x],[ys],
-                label=solver,
-                marker=:cross,
-                interval=:confidence, level=0.95
+                [ x ],[ mean_y ],
+                marker=:xcross,
+                label=false,
+                yerror=ys,
+                markerstrokecolor=:auto
             )
+            annotate!(x, mean_y, text(solver, :top, 4))
         else
+            println(RED_FG("'best_primal' nor 'primal_list' is found"))
         end
     end
     # export it
@@ -127,9 +131,19 @@ function generate_pareto_diagrams(instances_csv, solver_variants, solver_variant
             if "primal_pareto_diagram" in keys(performances[1])
                 arpd_points[solver_id] = create_arpd_points(performances, references_primal, time_limit)
             elseif "primal_list" in keys(performances[1])
-                x = performances[1]["time_searched"]
+                x = float(performances[1]["time_searched"])
                 ys = collect(map((e)->e["primal_list"], performances))
-                # FIXME add ARPD computation here
+                # ARPD computation
+                tmp_ys = []
+                for (i,a) in enumerate(ys)
+                    push!(tmp_ys, collect(map((b)-> begin
+                        ref_value = float(instance_classes[inst_class][i].bk_primal)
+                        rpd = (float(b)-ref_value)/ref_value*100
+                        rpd
+                    end, a)))
+                end
+                ys = tmp_ys
+                # collecting to the correct format
                 ys = collect(zip(ys...))
                 ys = collect(map((e)->mean(e), ys))
                 res = Dict()

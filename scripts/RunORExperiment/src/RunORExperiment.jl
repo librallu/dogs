@@ -222,13 +222,15 @@ function main()
         end
     end
     # when the solvers finished, generate analysis
-    tsp_wait()
     println(YELLOW_FG("WAITING FOR THE SOLVERS TO FINISH..."))
+    tsp_wait()
+    println(YELLOW_FG("GENERATING ANALYSIS..."))
     # read output file
     for k in keys(solver_variant_and_instance)
         solver_variant_and_instance[k]["stats"] = read_json_output(solver_variant_and_instance[k]["output_file_prefix"])
     end
     # generate best primal table
+    println("best primal table generation")
     BestPrimalTable.generate_best_primal_table(
         instances_csv,
         solver_variants,
@@ -236,6 +238,7 @@ function main()
         "$(common["output_directory"])/analysis/best_primal_bounds.csv"
     )
     # generate ARPD table
+    println("ARPD table generation")
     AverageRelativePercentageDeviation.generate_arpd_table(
         instances_csv,
         solver_variants,
@@ -243,6 +246,7 @@ function main()
         "$(common["output_directory"])/analysis/arpd_table.csv"
     )
     # generate Pareto diagrams
+    println("pareto diagram generation")
     pareto_diagram_path = "$(common["output_directory"])/analysis/pareto_diagrams/"
     mkpath(pareto_diagram_path)
     ParetoDiagram.generate_pareto_diagrams(

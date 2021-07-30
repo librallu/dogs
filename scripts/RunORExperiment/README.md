@@ -16,5 +16,11 @@ for each solver, then generates various performance analysis.
  - [X] add time to optimality proof
  - [X] add which algorithm is statistically better than the others ARPD
  - [X] add latex table for ARPD
- - [ ] Handle single-point multiple primal algorithms
- - [ ] Handle external experiments inclusion in the analysis
+ - [X] Handle single-point multiple primal algorithms
+ - [X] handle analysis generation only
+ - [X] Handle reference for ARPD != BK_ARPD
+ - [X] Handle external "primal/time" ARPD
+ - [ ] custom Pareto diagrams (subset of solvers)
+ - [ ] custom ARPD tables with custom time_limit for curves + inclusion of external ARPD
+ - [ ] Handle external "primal/time"
+ - [ ] re-run missed experiments with lower number of threads

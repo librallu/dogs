@@ -30,8 +30,9 @@ end
 creates an average-relative-percentage-deviation table.
 One row per instance class.
 Generates a CSV file and a latex file.
+:arpd_refs: instance name -> objective value
 """
-function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_instance, output_filename)
+function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_variant_and_instance, output_filename)
     # tex preembule
     res_tex = "\\begin{tabular}{c|"
     for _ in solver_variants
@@ -76,7 +77,7 @@ function generate_arpd_table(instances_csv, solver_variants, solver_variant_and_
                 inst_solver_id = "$(solver_name)_$(inst.name)"
                 output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"
                 stats = read_performance_stats(output_file)
-                reference_primal = float(inst.bk_primal)
+                reference_primal = arpd_refs[inst.name]
                 if "best_primal" in keys(stats)
                     solver_primal = float(stats["best_primal"])
                 elseif "primal_list" in keys(stats)

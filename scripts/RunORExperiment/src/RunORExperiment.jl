@@ -34,6 +34,9 @@ function parse_commandline()
             help = "configuration file (.toml)"
             required = true
             arg_type = String
+        "--analysis_only"
+            help = "only performs the analysis (requires the directory path of the computed experiment)"
+            arg_type = String
         "--debug"
             help = "if set, only prints the commands instead of executing them"
             action = :store_true
@@ -42,7 +45,7 @@ function parse_commandline()
 end
 
 """ defines various common variables among the solvers """
-function common_variables(configuration, configuration_filename)
+function common_variables(configuration, configuration_filename, analysis_only)
     instance_csv_filename = configuration["instance_list"]
     if !isabspath(instance_csv_filename)
         instance_csv_filename = abspath(
@@ -59,6 +62,9 @@ function common_variables(configuration, configuration_filename)
             "$(experiment_name)_$(date_id)/"
         )
     )
+    if analysis_only !== nothing
+        output_directory = string(analysis_only)
+    end
     return Dict(
         "instance_csv_filename" => instance_csv_filename,
         "experiment_name" => experiment_name,
@@ -141,24 +147,32 @@ function main()
     tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
-    parsed_args = parse_commandline()
+    # parsed_args = parse_commandline()
     ### debug comment (otherwise JIT compilation is way too slow!)
-    # parsed_args = Dict(
-    #     # "configuration" => "../examples/test_flowtime.json",
-    #     "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
-    #     "debug" => true
-    # )
+    parsed_args = Dict(
+        # "configuration" => "../examples/test_flowtime.json",
+        "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
+        # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+        "debug" => true,
+        "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
+        # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
+    )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]
+    analysis_only = ""
+    if "analysis_only" in keys(parsed_args)
+        analysis_only = parsed_args["analysis_only"]
+    end
     pad = 20
     println(rpad(" configuration:", pad, " ")*configuration_filename)
     println(rpad(" debug:", pad, " ")*string(is_debug))
+    println(rpad(" analysis only:", pad, " ")*string(analysis_only))
     # read experiment .toml file
     println(YELLOW_FG("READING EXPERIMENT FILE ($(configuration_filename))..."))
     configuration = read_configuration(configuration_filename)
     pad = 25
-    common = common_variables(configuration, configuration_filename)
+    common = common_variables(configuration, configuration_filename, analysis_only)
     for i in keys(common)
         println(rpad(i*":", pad, " ")*common[i])
     end
@@ -207,10 +221,12 @@ function main()
                 "#{file_prefix}"
                 =>common["output_directory"]*"/solver_results/$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
             )
-            if parsed_args["debug"]
-                println(command)
-            else
-                run(`sh -c $command`)
+            if analysis_only == "" 
+                if is_debug
+                    println(command)
+                else
+                    run(`sh -c $command`)
+                end
             end
             id = "$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
             solver_variant_and_instance[id] = Dict(
@@ -225,9 +241,59 @@ function main()
     println(YELLOW_FG("WAITING FOR THE SOLVERS TO FINISH..."))
     tsp_wait()
     println(YELLOW_FG("GENERATING ANALYSIS..."))
+    # check that all tests have been correctly executed (all files are present)
+    for k in keys(solver_variant_and_instance)
+        if ! isfile("$(solver_variant_and_instance[k]["output_file_prefix"]).stats.json")
+            println(RED_FG("WARNING: non-existing result $(solver_variant_and_instance[k]["output_file_prefix"])"))
+        end
+    end
     # read output file
     for k in keys(solver_variant_and_instance)
         solver_variant_and_instance[k]["stats"] = read_json_output(solver_variant_and_instance[k]["output_file_prefix"])
+    end
+    # create ARPD references
+    arpd_refs = Dict() # instance name -> reference value
+    if "analysis" in keys(configuration) && "arpd_ref" in keys(configuration["analysis"])
+        # if reference is given, read it 
+        arpd_ref_csv = read_csv(abspath(joinpath(
+            configuration_filename, "..",
+            configuration["analysis"]["arpd_ref"])
+        ))
+        for inst in arpd_ref_csv
+            arpd_refs[inst.name] = inst.reference_objective
+        end
+    else
+        # otherwise set the best_known as reference
+        for inst in instances_csv
+            arpd_refs[inst.name] = inst.bk_primal
+        end
+    end
+    # possibly add external results ARPD
+    custom_arpds_data = Dict()
+    if "analysis" in keys(configuration) && "external_arpd_results" in keys(configuration["analysis"])
+        custom_arpds = configuration["analysis"]["external_arpd_results"]
+        for external_algo in custom_arpds
+            name = external_algo["name"]
+            time_col = external_algo["time"]
+            arpd_col = external_algo["arpd"]
+            cpu_regularization_factor = 1.
+            if "cpu_regularization_factor" in keys(external_algo)
+                cpu_regularization_factor = external_algo["cpu_regularization_factor"]
+            end
+            csv_filename = abspath(joinpath(
+                configuration_filename, "..",
+                external_algo["file"]
+            ))
+            csv = read_csv(csv_filename)
+            contents = Dict()
+            for line in csv
+                contents[line.instance_class] = Dict()
+                contents[line.instance_class]["time"] = getindex(line, Meta.parse("$(time_col)")) *
+                    cpu_regularization_factor
+                contents[line.instance_class]["arpd"] = getindex(line, Meta.parse("$(arpd_col)"))
+            end
+            custom_arpds_data[name] = contents
+        end
     end
     # generate best primal table
     println("best primal table generation")
@@ -241,6 +307,7 @@ function main()
     println("ARPD table generation")
     AverageRelativePercentageDeviation.generate_arpd_table(
         instances_csv,
+        arpd_refs,
         solver_variants,
         solver_variant_and_instance,
         "$(common["output_directory"])/analysis/arpd_table.csv"
@@ -251,6 +318,8 @@ function main()
     mkpath(pareto_diagram_path)
     ParetoDiagram.generate_pareto_diagrams(
         instances_csv,
+        arpd_refs,
+        custom_arpds_data,
         solver_variants,
         solver_variant_and_instance,
         pareto_diagram_path

@@ -45,6 +45,17 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
                 markerstrokecolor=:auto
             )
             annotate!(x, mean_y, text(solver, :top, 4))
+        elseif "single_y" in keys(solvers_arpd_points[solver])
+            tmp = solvers_arpd_points[solver]["single_y"]
+            x = tmp[1]
+            y = tmp[2]
+            scatter!(
+                [ x ],[ y ],
+                marker=:xcross,
+                label=false,
+                markerstrokecolor=:auto
+            )
+            annotate!(x, y, text(solver, :top, 4))
         else
             println(RED_FG("'best_primal' nor 'primal_list' is found"))
         end
@@ -59,7 +70,7 @@ end
 given a list of statistics for a specific algorithm on each instance of an
 instance class, compute a set of points representing the evolution of the ARPD.
 """
-function create_arpd_points(performances, references_primal, time_limit, nb_steps=100)
+function create_arpd_points(performances, references_primal, time_limit, nb_steps=200)
     step_size = float(time_limit)/nb_steps
     arpd_y = zeros(nb_steps+1) # one for each step
     step_where_all_have_solution = 1
@@ -100,7 +111,7 @@ end
 create pareto diagrams. They plot for each instance class, the evolution
 of the solution quality (ARPD) relative to the time.
 """
-function generate_pareto_diagrams(instances_csv, solver_variants, solver_variant_and_instance, output_dir)
+function generate_pareto_diagrams(instances_csv, arpd_refs, custom_arpds_data, solver_variants, solver_variant_and_instance, output_dir)
     # build instance classes
     instance_classes = Dict() # instance class -> vector of instance data
     for inst in instances_csv
@@ -114,7 +125,7 @@ function generate_pareto_diagrams(instances_csv, solver_variants, solver_variant
     for inst_class in keys(instance_classes)
         references_primal = []
         for inst in instance_classes[inst_class]
-            push!(references_primal, float(inst.bk_primal))
+            push!(references_primal, float(arpd_refs[inst.name]))
         end
         arpd_points = Dict()
         for s in solver_variants # for each solver
@@ -152,6 +163,13 @@ function generate_pareto_diagrams(instances_csv, solver_variants, solver_variant
             else
                 println(RED_FG("'best_primal' nor 'primal_list' is found"))
             end
+        end
+        for algo_name in keys(custom_arpds_data)
+            res = Dict()
+            x = custom_arpds_data[algo_name][inst_class]["time"]
+            ys = custom_arpds_data[algo_name][inst_class]["arpd"]
+            res["single_y"] = [x, ys]
+            arpd_points[algo_name] = res
         end
         draw_arpd_diagrams(arpd_points, inst_class, output_dir)
     end

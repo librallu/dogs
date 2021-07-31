@@ -30,12 +30,49 @@ function time_to_optimal(stats)
 end
 
 """
+1234567 -> 1.234.567
+"""
+function human_format_number(n)
+    res = ""
+    while n > 1000
+        res = ".$(lpad("$(n % 1000)",3,"0"))$(res)"
+        n = n ÷ 1000
+    end
+    res = "$(n)$(res)"
+    res
+end
+
+"""
+adds bold to the latex string
+"""
+function latex_bold(s)
+    "{\\bf $(s)}"
+end
+
+"""
 creates a "best-primal-bound" table (best solution found for each algorithm)
 """
 function generate_best_primal_table(instances_csv, custom_external, solver_variants, solver_variant_and_instance, output_filename, time_to_best_known=true, time_opt=true)
-    res = "instance,best_known"
+    res_tex = "\\begin{tabular}{cc|"
+    for _ in custom_external 
+        res_tex *= "c"
+    end
+    res_tex *= "|"
+    for _ in solver_variants
+        res_tex *= "c"
+    end
+    res_tex *="}\n"
+    res_tex *= "instance & best_known"
     # add external data
     external_data_list = collect(keys(custom_external))
+    for s in external_data_list
+        res_tex *= " & $(s)"
+    end
+    for s in solver_variants
+        res_tex *= " & $(s["name"])$(s["solver_params_compact"])"
+    end
+    res_tex *= " \\\\ \n \\hline \n"
+    res = "instance,best_known"
     for k in external_data_list
         res *= ",$(k)"
     end
@@ -50,18 +87,25 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
         end
     end
     res *= "\n"
+    pad = 16
     for inst in instances_csv
         res *= inst.name*","*"$(inst.bk_primal)"
+        res_tex *= "$(rpad(inst.name, pad, " ")) & $(rpad(human_format_number(inst.bk_primal), pad, " "))"
+        tex_vals = []
         # add external data
         for k in external_data_list
-            res *= ",$(custom_external[k]["results"][inst.name])"
+            v = custom_external[k]["results"][inst.name]
+            res *= ",$(v)"
+            push!(tex_vals, v)
         end
         # add solver variants
         for s in solver_variants
             inst_solver_id = "$(s["name"])$(s["solver_params_compact"])_$(inst.name)"
             stats = solver_variant_and_instance[inst_solver_id]["stats"]
             if "best_primal" in keys(stats)
-                res *= ","*"$(stats["best_primal"])"
+                v = stats["best_primal"]
+                res *= ","*"$(v)"
+                push!(tex_vals, v)
                 if time_to_best_known
                     res *= ","*"$(time_to_objective(stats, inst.bk_primal))"
                 end
@@ -69,7 +113,9 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
                     res *= ","*"$(time_to_optimal(stats))"
                 end
             elseif "primal_list" in keys(stats)
-                res *= ",$(min(stats["primal_list"]...))"
+                v = min(stats["primal_list"]...)
+                res *= ",$(v)"
+                push!(tex_vals, v)
                 if time_to_best_known
                     res *= ",-"
                 end
@@ -87,10 +133,27 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
                 end
             end
         end
+        # write latex line
+        min_val = min(tex_vals...)
+        for v in tex_vals
+            tex_str = human_format_number(v)
+            if v == min_val && v <= inst.bk_primal
+                tex_str = latex_bold(tex_str)
+            end
+            res_tex *= " & $(rpad(
+                "$(tex_str)", pad, " "
+            ))"
+        end
         res *= "\n"
+        res_tex *= "\\\\ \n"
     end
     f = open(output_filename, "w")
     write(f, res)
+    close(f)
+    # write tex file
+    res_tex *= "\\end{tabular}"
+    f = open(output_filename*".tex", "w")
+    write(f, res_tex)
     close(f)
 end
 

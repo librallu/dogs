@@ -1,28 +1,12 @@
 module RunORExperiment
 
 using ArgParse
-using JSON
-using CSV
 using Crayons
 using Crayons.Box
-using IterTools
-using Dates
 
-include("BestPrimalTable.jl")
-include("AverageRelativePercentageDeviation.jl")
-include("ParetoDiagram.jl")
+include("PerformExperiment.jl")
+include("BuildAnalysis.jl")
 
-""" reads JSON experiment file """
-function read_configuration(configuration_filename)
-    open(configuration_filename, "r") do f
-        return JSON.parse(read(f,String))
-    end
-end
-
-""" reads the CSV instance file """
-function read_csv(csv_filename)
-    return CSV.File(csv_filename)
-end
 
 """ function to parse the command line"""
 function parse_commandline()
@@ -44,107 +28,9 @@ function parse_commandline()
     return parse_args(s)
 end
 
-""" defines various common variables among the solvers """
-function common_variables(configuration, configuration_filename, analysis_only)
-    instance_csv_filename = configuration["instance_list"]
-    if !isabspath(instance_csv_filename)
-        instance_csv_filename = abspath(
-            joinpath(configuration_filename,"..",instance_csv_filename)
-        )
-    end
-    experiment_name = configuration["experiment_name"]
-    csv_instances_root = abspath(joinpath(instance_csv_filename, ".."))
-    date_id = Dates.format(Dates.now(), "yyyy_mm_dd")
-    output_directory = abspath(
-        joinpath(
-            configuration_filename,"..",
-            configuration["output_prefix"],
-            "$(experiment_name)_$(date_id)/"
-        )
-    )
-    if analysis_only !== nothing
-        output_directory = string(analysis_only)
-    end
-    return Dict(
-        "instance_csv_filename" => instance_csv_filename,
-        "experiment_name" => experiment_name,
-        "csv_instances_root" => csv_instances_root,
-        "date_id" => date_id,
-        "output_directory" => output_directory
-    )
-end
-
-""" checks that the task-spooler exists on the system """
-function tsp_check()
-    try 
-        run(`which tsp`)
-    catch _
-        println(RED_FG("ERROR: IS tsp INSTALLED ON THE MACHINE?"))
-        exit(1)
-    end
-end
-
-""" set the number of parallel tasks on the task-spooler """
-function tsp_set(nb_parallel::Int)
-    run(`tsp -S 1`)
-    for _ in 1:1:200
-        try
-            run(`tsp -k`)    
-        catch _
-            break
-        end
-    end
-    run(`tsp -K`)
-    run(`tsp /bin/true`)
-    run(`tsp -S $nb_parallel`)
-end
-
-""" waits the last job to end."""
-function tsp_wait()
-    run(`tsp -w`)
-end
-
-""" gets the list of solver variants.
-    ∀ solvers, cartesian product of each possible parameter configuration
-"""
-function compute_solver_variants(configuration, configuration_filename)
-    solver_variants = []
-    for solver in configuration["solvers"]
-        solver_name = solver["name"]
-        solver_path = solver["exe_path"]
-        if !isabspath(solver_path)
-            solver_path = abspath(
-                joinpath(configuration_filename,"..",solver_path)
-            )
-        end
-        param_names = []
-        param_values = []
-        for p in solver["params"]
-            push!(param_names, p["name"])
-            push!(param_values, p["values"])
-        end
-        for a in IterTools.product(param_values...)
-            push!(solver_variants, Dict(
-                "name" => solver_name,
-                "path" => solver_path,
-                "params" => collect(zip(param_names,a, param_values))
-            ))
-        end
-    end
-    return solver_variants
-end
-
-
-function read_json_output(prefix)
-    filename = prefix*".stats.json"
-    open(filename, "r") do f
-        return JSON.parse(read(f,String))
-    end
-end
-
 
 function main()
-    tsp_check()
+    PerformExperiment.tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
     # parsed_args = parse_commandline()
@@ -170,159 +56,57 @@ function main()
     println(rpad(" analysis only:", pad, " ")*string(analysis_only))
     # read experiment .toml file
     println(YELLOW_FG("READING EXPERIMENT FILE ($(configuration_filename))..."))
-    configuration = read_configuration(configuration_filename)
+    configuration = PerformExperiment.read_configuration(configuration_filename)
     pad = 25
-    common = common_variables(configuration, configuration_filename, analysis_only)
+    common = PerformExperiment.experiment_variables(configuration, configuration_filename, analysis_only)
     for i in keys(common)
         println(rpad(i*":", pad, " ")*common[i])
     end
     # read instance .csv file
     println(YELLOW_FG("SETTING UP TSP..."))
-    tsp_set(configuration["nb_parallel_tasks"])
+    PerformExperiment.tsp_set(configuration["nb_parallel_tasks"])
     println(YELLOW_FG("READING CSV ($(common["instance_csv_filename"]))..."))
     # instances = read_csv(configuration["instance_filenames"])
-    instances_csv = read_csv(common["instance_csv_filename"])
+    instances_csv = PerformExperiment.read_csv(common["instance_csv_filename"])
     # generate and execute commands (cartesian product on instances, algos with params)
     println(YELLOW_FG("RUNNING EXPERIMENTS..."))
-    solver_variants = compute_solver_variants(configuration, configuration_filename)
+    solver_variants = PerformExperiment.compute_solver_variants(configuration, configuration_filename)
     println(YELLOW_FG("CREATING OUTPUT DIR $(common["output_directory"])..."))
     mkpath(common["output_directory"])
     mkpath(common["output_directory"]*"/solver_results/")
     mkpath(common["output_directory"]*"/analysis/")
     # for each solver and instance, build the command to run
-    solver_variant_and_instance = Dict()
-    for solver_conf in solver_variants
-        for inst in instances_csv
-            command = "tsp $(solver_conf["path"])"
-            instance_name = inst.name
-            for arg in solver_conf["params"]
-                if arg[1] != ""
-                    command *= " --$(arg[1])"
-                end
-                command *= " $(arg[2])"
+    solver_variant_with_instance = PerformExperiment.compute_solver_with_instance(
+        solver_variants, common, instances_csv
+    )
+    # run each experiment if not analysis only
+    if analysis_only == "" 
+        for experiment_id in keys(solver_variant_with_instance)
+            command = solver_variant_with_instance[experiment_id]["command"]
+            if is_debug
+                println(command)
+            else
+                run(`sh -c $command`)
             end
-            # replace patterns
-            solver_params_compact = ""
-            for v in solver_conf["params"]
-                if length(v[3]) > 1
-                    solver_params_compact *= "_$(v[2])"
-                end
-            end
-            solver_conf["solver_params_compact"] = solver_params_compact
-            command = replace(command,
-                "#{instance_path}"
-                =>abspath(joinpath(common["instance_csv_filename"],"..",inst.path)),
-            )
-            command = replace(command,
-                "#{time_limit}"
-                =>inst.time_limit
-            )
-            command = replace(command,
-                "#{file_prefix}"
-                =>common["output_directory"]*"/solver_results/$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
-            )
-            if analysis_only == "" 
-                if is_debug
-                    println(command)
-                else
-                    run(`sh -c $command`)
-                end
-            end
-            id = "$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
-            solver_variant_and_instance[id] = Dict(
-                "command" => command,
-                "instance_name" => instance_name,
-                "solver_conf" => solver_conf["params"],
-                "output_file_prefix" => common["output_directory"]*"/solver_results/$(solver_conf["name"])$(solver_params_compact)_$(instance_name)"
-            )
         end
     end
     # when the solvers finished, generate analysis
     println(YELLOW_FG("WAITING FOR THE SOLVERS TO FINISH..."))
-    tsp_wait()
+    PerformExperiment.tsp_wait()
     println(YELLOW_FG("GENERATING ANALYSIS..."))
     # check that all tests have been correctly executed (all files are present)
-    for k in keys(solver_variant_and_instance)
-        if ! isfile("$(solver_variant_and_instance[k]["output_file_prefix"]).stats.json")
-            println(RED_FG("WARNING: non-existing result $(solver_variant_and_instance[k]["output_file_prefix"])"))
+    for k in keys(solver_variant_with_instance)
+        if ! isfile("$(solver_variant_with_instance[k]["output_file_prefix"]).stats.json")
+            println(RED_FG("WARNING: non-existing result $(solver_variant_with_instance[k]["output_file_prefix"])"))
         end
     end
-    # read output file
-    for k in keys(solver_variant_and_instance)
-        solver_variant_and_instance[k]["stats"] = read_json_output(solver_variant_and_instance[k]["output_file_prefix"])
+    # read output files and populate solver_variant_with_instance
+    for k in keys(solver_variant_with_instance)
+        solver_variant_with_instance[k]["stats"] = PerformExperiment.read_performance_stats(solver_variant_with_instance[k]["output_file_prefix"]*".stats.json")
     end
-    # create ARPD references
-    arpd_refs = Dict() # instance name -> reference value
-    if "analysis" in keys(configuration) && "arpd_ref" in keys(configuration["analysis"])
-        # if reference is given, read it 
-        arpd_ref_csv = read_csv(abspath(joinpath(
-            configuration_filename, "..",
-            configuration["analysis"]["arpd_ref"])
-        ))
-        for inst in arpd_ref_csv
-            arpd_refs[inst.name] = inst.reference_objective
-        end
-    else
-        # otherwise set the best_known as reference
-        for inst in instances_csv
-            arpd_refs[inst.name] = inst.bk_primal
-        end
-    end
-    # possibly add external results ARPD
-    custom_arpds_data = Dict()
-    if "analysis" in keys(configuration) && "external_arpd_results" in keys(configuration["analysis"])
-        custom_arpds = configuration["analysis"]["external_arpd_results"]
-        for external_algo in custom_arpds
-            name = external_algo["name"]
-            time_col = external_algo["time"]
-            arpd_col = external_algo["arpd"]
-            cpu_regularization_factor = 1.
-            if "cpu_regularization_factor" in keys(external_algo)
-                cpu_regularization_factor = external_algo["cpu_regularization_factor"]
-            end
-            csv_filename = abspath(joinpath(
-                configuration_filename, "..",
-                external_algo["file"]
-            ))
-            csv = read_csv(csv_filename)
-            contents = Dict()
-            for line in csv
-                contents[line.instance_class] = Dict()
-                contents[line.instance_class]["time"] = getindex(line, Meta.parse("$(time_col)")) *
-                    cpu_regularization_factor
-                contents[line.instance_class]["arpd"] = getindex(line, Meta.parse("$(arpd_col)"))
-            end
-            custom_arpds_data[name] = contents
-        end
-    end
-    # generate best primal table
-    println("best primal table generation")
-    BestPrimalTable.generate_best_primal_table(
-        instances_csv,
-        solver_variants,
-        solver_variant_and_instance,
-        "$(common["output_directory"])/analysis/best_primal_bounds.csv"
-    )
-    # generate ARPD table
-    println("ARPD table generation")
-    AverageRelativePercentageDeviation.generate_arpd_table(
-        instances_csv,
-        arpd_refs,
-        solver_variants,
-        solver_variant_and_instance,
-        "$(common["output_directory"])/analysis/arpd_table.csv"
-    )
-    # generate Pareto diagrams
-    println("pareto diagram generation")
-    pareto_diagram_path = "$(common["output_directory"])/analysis/pareto_diagrams/"
-    mkpath(pareto_diagram_path)
-    ParetoDiagram.generate_pareto_diagrams(
-        instances_csv,
-        arpd_refs,
-        custom_arpds_data,
-        solver_variants,
-        solver_variant_and_instance,
-        pareto_diagram_path
+    # generate analysis
+    BuildAnalysis.build_analysis(
+        configuration, common, instances_csv, solver_variants, solver_variant_with_instance
     )
 end
 main()

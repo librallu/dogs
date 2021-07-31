@@ -7,15 +7,6 @@ using Crayons.Box
 using Statistics
 
 """
-reads a JSON file describing the algorithm performance statistics.
-"""
-function read_performance_stats(filename::String)
-    open(filename, "r") do f
-        return JSON.parse(read(f,String))
-    end
-end
-
-"""
 returns true if sequence A is statistically significantly better than sequence B.
 According to the signed Wilcoxon signed-rank test
 """
@@ -53,7 +44,7 @@ function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_v
     end
     res *= ",wilcoxon_best"
     res *= "\n"
-    # build instance classes
+    # build the sorted instance classes
     instance_classes_sorted = []
     instance_classes = Dict() # instance class -> vector of instance data
     for inst in instances_csv
@@ -75,8 +66,7 @@ function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_v
             solver_lists[solver_name] = []
             for inst in instance_classes[inst_class]
                 inst_solver_id = "$(solver_name)_$(inst.name)"
-                output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"
-                stats = read_performance_stats(output_file)
+                stats = solver_variant_and_instance[inst_solver_id]["stats"]
                 reference_primal = arpd_refs[inst.name]
                 if "best_primal" in keys(stats)
                     solver_primal = float(stats["best_primal"])

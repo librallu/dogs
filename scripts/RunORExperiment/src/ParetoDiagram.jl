@@ -1,6 +1,5 @@
 module ParetoDiagram
 
-using JSON
 using Plots
 using LaTeXStrings
 using Statistics
@@ -8,21 +7,16 @@ using ColorSchemes
 using Crayons
 using Crayons.Box
 
-"""
-reads a JSON file describing the algorithm performance statistics.
-"""
-function read_performance_stats(filename::String)
-    open(filename, "r") do f
-        return JSON.parse(read(f,String))
-    end
-end
 
 """
 given some arpd point lists, draw the curves
 """
-function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
+function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir, name="")
     # create plot
-    output_filename = "$(output_dir)/pareto_diagram_$(inst_class).pdf"
+    if name == ""
+        name = "pareto_diagram"
+    end
+    output_filename = "$(output_dir)/$(name)_$(inst_class).pdf"
     p = plot(fontfamily="serif-roman")
     xlabel!("CPU time in seconds on instances of type `$(inst_class)'")
     ylabel!("average relative percentage deviation")
@@ -44,7 +38,7 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
                 yerror=ys,
                 markerstrokecolor=:auto
             )
-            annotate!(x, mean_y, text(solver, :top, 4))
+            annotate!(x, mean_y, text(solver, :top, 5))
         elseif "single_y" in keys(solvers_arpd_points[solver])
             tmp = solvers_arpd_points[solver]["single_y"]
             x = tmp[1]
@@ -55,7 +49,7 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir)
                 label=false,
                 markerstrokecolor=:auto
             )
-            annotate!(x, y, text(solver, :top, 4))
+            annotate!(x, y, text(solver, :top, 5))
         else
             println(RED_FG("'best_primal' nor 'primal_list' is found"))
         end
@@ -111,16 +105,7 @@ end
 create pareto diagrams. They plot for each instance class, the evolution
 of the solution quality (ARPD) relative to the time.
 """
-function generate_pareto_diagrams(instances_csv, arpd_refs, custom_arpds_data, solver_variants, solver_variant_and_instance, output_dir)
-    # build instance classes
-    instance_classes = Dict() # instance class -> vector of instance data
-    for inst in instances_csv
-        if inst.class_name in keys(instance_classes)
-            push!(instance_classes[inst.class_name], inst)
-        else
-            instance_classes[inst.class_name] = [inst]
-        end
-    end
+function generate_pareto_diagrams(instance_classes, arpd_refs, custom_arpds_data, solver_variants, solver_variant_and_instance, output_dir, name="")
     # for each instance class
     for inst_class in keys(instance_classes)
         references_primal = []
@@ -136,8 +121,8 @@ function generate_pareto_diagrams(instances_csv, arpd_refs, custom_arpds_data, s
             for inst in instance_classes[inst_class]
                 time_limit = inst.time_limit
                 inst_solver_id = "$(solver_id)_$(inst.name)"
-                output_file = solver_variant_and_instance[inst_solver_id]["output_file_prefix"]*".stats.json"
-                push!(performances, read_performance_stats(output_file))
+                stats = solver_variant_and_instance[inst_solver_id]["stats"]
+                push!(performances, stats)
             end
             if "primal_pareto_diagram" in keys(performances[1])
                 arpd_points[solver_id] = create_arpd_points(performances, references_primal, time_limit)
@@ -171,7 +156,7 @@ function generate_pareto_diagrams(instances_csv, arpd_refs, custom_arpds_data, s
             res["single_y"] = [x, ys]
             arpd_points[algo_name] = res
         end
-        draw_arpd_diagrams(arpd_points, inst_class, output_dir)
+        draw_arpd_diagrams(arpd_points, inst_class, output_dir, name)
     end
 end
 

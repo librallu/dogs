@@ -15,12 +15,17 @@ for each solver, then generates various performance analysis.
  - [X] add time to best-known
  - [X] add time to optimality proof
  - [X] add which algorithm is statistically better than the others ARPD
- - [X] add latex table for ARPD
+ - [X] latex table for ARPD with Wilcoxon signed-rank test
  - [X] Handle single-point multiple primal algorithms
  - [X] handle analysis generation only
  - [X] Handle reference for ARPD != BK_ARPD
  - [X] Handle external "primal/time" ARPD
- - [ ] custom Pareto diagrams (subset of solvers)
+ - [X] custom Pareto diagrams (subset of solvers)
+ - [X] best-known stats (number improved, number reached, number proved to optimality)
+ - [X] add custom data in the best_known table
+ - [ ] generate latex file for best known solutions
  - [ ] custom ARPD tables with custom time_limit for curves + inclusion of external ARPD
- - [ ] Handle external "primal/time"
  - [ ] re-run missed experiments with lower number of threads
+ - [ ] add spaces in the latex table outputs for easy copy & paste
+ - [ ] add multiple_y types to the best known table
+ - [ ] if Cartesian product over parameters, perform analysis similar to the ROADEF18 paper

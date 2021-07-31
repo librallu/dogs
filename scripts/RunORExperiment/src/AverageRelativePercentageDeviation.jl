@@ -106,15 +106,18 @@ function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_v
         res *= ",$(best_wilcoxon)"
         res *= "\n"
         # update tex
-        res_tex *= "$(inst_class)"
+        pad = 12
+        res_tex *= "$(rpad(inst_class, pad, " "))"
         for s in solver_variants
             s_name = "$(s["name"])$(s["solver_params_compact"])"
             arpd = round(solver_arpd[s_name], digits=2)
+            v_tex = ""
             if best_wilcoxon == s_name
-                res_tex *= " & \\textbf{$(arpd)}"
+                v_tex = "{\\bf $(arpd)}"
             else
-                res_tex *= " & $(arpd)"
+                v_tex = "$(arpd)"
             end
+            res_tex *= " & $(rpad(v_tex, pad, " "))"
         end
         res_tex *= " \\\\ \n"
     end

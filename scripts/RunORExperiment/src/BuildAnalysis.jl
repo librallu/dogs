@@ -11,6 +11,7 @@ include("BestKnownStats.jl")
 include("BestPrimalTable.jl")
 include("AverageRelativePercentageDeviation.jl")
 include("ParetoDiagram.jl")
+include("ARPDWithExternalData.jl")
 
 
 function build_analysis(configuration, common, instances_csv, solver_variants, solver_variant_with_instance)
@@ -198,6 +199,22 @@ function build_analysis(configuration, common, instances_csv, solver_variants, s
                 bk["time_to_opt"]
             )
         end
+    end
+    # generate ARPD tables comparing external ARPD for each representative time
+    # for each algo in the external data
+    # try to match them
+    custom_arpd_path = "$(common["output_directory"])/analysis/custom_arpd_tables/"
+    mkpath(custom_arpd_path)
+    for algo_name in keys(external_arpds_data)
+        algo_data = external_arpds_data[algo_name]
+        ARPDWithExternalData.generate_external_arpd_table(
+            instances_csv,
+            arpd_refs,
+            solver_variants,
+            solver_variant_with_instance,
+            "$(custom_arpd_path)/$(algo_name)_arpd_table.csv",
+            algo_name, algo_data
+        )
     end
 end
 

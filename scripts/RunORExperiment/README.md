@@ -23,9 +23,9 @@ for each solver, then generates various performance analysis.
  - [X] custom Pareto diagrams (subset of solvers)
  - [X] best-known stats (number improved, number reached, number proved to optimality)
  - [X] add custom data in the best_known table
- - [ ] generate latex file for best known solutions
- - [ ] add spaces in the latex table outputs for easy copy & paste
- - [ ] custom ARPD tables with custom time_limit for curves + inclusion of external ARPD
+ - [X] generate latex file for best known solutions
+ - [X] add spaces in the latex table outputs for easy copy & paste
+ - [X] custom ARPD tables with custom time_limit for curves + inclusion of external ARPD
  - [ ] re-run missed experiments with lower number of threads
  - [ ] add multiple_y types to the best known table
  - [ ] if Cartesian product over parameters, perform analysis similar to the ROADEF18 paper

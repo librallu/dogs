@@ -108,7 +108,6 @@ function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants,
     f = open(output_filename*".tex", "w")
     write(f, res_tex)
     close(f)
-    println(res_tex)
 end
 
 end # module

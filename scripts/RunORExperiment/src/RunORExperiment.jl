@@ -24,6 +24,9 @@ function parse_commandline()
         "--debug"
             help = "if set, only prints the commands instead of executing them"
             action = :store_true
+        "--fallback_run"
+            help = "if set, runs only the failed tests with lower number of threads (given as parameters)"
+            arg_type = Int
     end
     return parse_args(s)
 end
@@ -50,10 +53,15 @@ function main()
     if "analysis_only" in keys(parsed_args)
         analysis_only = parsed_args["analysis_only"]
     end
+    fallback_run = nothing
+    if "fallback_run" in keys(parsed_args)
+        fallback_run = parsed_args["fallback_run"]
+    end
     pad = 20
     println(rpad(" configuration:", pad, " ")*configuration_filename)
     println(rpad(" debug:", pad, " ")*string(is_debug))
     println(rpad(" analysis only:", pad, " ")*string(analysis_only))
+    println(rpad(" fallback run:", pad, " ")*string(fallback_run))
     # read experiment .toml file
     println(YELLOW_FG("READING EXPERIMENT FILE ($(configuration_filename))..."))
     configuration = PerformExperiment.read_configuration(configuration_filename)

@@ -40,11 +40,13 @@ function main()
     ### debug comment (otherwise JIT compilation is way too slow!)
     parsed_args = Dict(
         # "configuration" => "../examples/test_flowtime.json",
-        "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+        # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
+        "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
         "debug" => true,
-        "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
-        # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
+        # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
+        "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
+        "fallback_run" => 4
+        # "fallback_run" => nothing
     )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
@@ -88,7 +90,7 @@ function main()
         solver_variants, common, instances_csv
     )
     # run each experiment if not analysis only
-    if analysis_only == "" 
+    if analysis_only == "" && fallback_run === nothing
         for experiment_id in keys(solver_variant_with_instance)
             command = solver_variant_with_instance[experiment_id]["command"]
             if is_debug
@@ -102,10 +104,27 @@ function main()
     println(YELLOW_FG("WAITING FOR THE SOLVERS TO FINISH..."))
     PerformExperiment.tsp_wait()
     println(YELLOW_FG("GENERATING ANALYSIS..."))
+    invalid_experiments = []
     # check that all tests have been correctly executed (all files are present)
     for k in keys(solver_variant_with_instance)
         if ! isfile("$(solver_variant_with_instance[k]["output_file_prefix"]).stats.json")
-            println(RED_FG("WARNING: non-existing result $(solver_variant_with_instance[k]["output_file_prefix"])"))
+            push!(invalid_experiments, k)
+            if fallback_run === nothing
+                println(RED_FG("WARNING: non-existing result $(solver_variant_with_instance[k]["output_file_prefix"])"))
+            end
+        end
+    end
+    if fallback_run !== nothing
+        println(GREEN_FG("$(length(invalid_experiments)) tests to run again"))
+        println("setting $(fallback_run) threads")
+        PerformExperiment.tsp_set(fallback_run)
+        for experiment_id in invalid_experiments
+            command = solver_variant_with_instance[experiment_id]["command"]
+            if is_debug
+                println(command)
+            else
+                run(`sh -c $command`)
+            end
         end
     end
     # read output files and populate solver_variant_with_instance

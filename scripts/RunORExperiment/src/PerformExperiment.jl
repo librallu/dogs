@@ -51,7 +51,7 @@ end
 
 
 """ defines various common variables among the solvers """
-function experiment_variables(configuration, configuration_filename, analysis_only)
+function experiment_variables(configuration, configuration_filename, analysis_only, fallback_run)
     instance_csv_filename = configuration["instance_list"]
     if !isabspath(instance_csv_filename)
         instance_csv_filename = abspath(
@@ -68,7 +68,10 @@ function experiment_variables(configuration, configuration_filename, analysis_on
             "$(experiment_name)_$(date_id)/"
         )
     )
-    if analysis_only !== nothing
+    if fallback_run !== nothing && fallback_run != ""
+        output_directory = string(fallback_run)
+    end
+    if analysis_only !== nothing && analysis_only != ""
         output_directory = string(analysis_only)
     end
     return Dict(

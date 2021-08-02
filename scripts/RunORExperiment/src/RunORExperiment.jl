@@ -25,8 +25,8 @@ function parse_commandline()
             help = "if set, only prints the commands instead of executing them"
             action = :store_true
         "--fallback_run"
-            help = "if set, runs only the failed tests with lower number of threads (given as parameters)"
-            arg_type = Int
+            help = "if set, runs only the failed tests with lower number of threads"
+            arg_type = String
     end
     return parse_args(s)
 end
@@ -36,18 +36,18 @@ function main()
     PerformExperiment.tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
-    # parsed_args = parse_commandline()
+    parsed_args = parse_commandline()
     ### debug comment (otherwise JIT compilation is way too slow!)
-    parsed_args = Dict(
-        # "configuration" => "../examples/test_flowtime.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
-        "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
-        "debug" => true,
-        # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
-        "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
-        "fallback_run" => 4
-        # "fallback_run" => nothing
-    )
+    # parsed_args = Dict(
+    #     # "configuration" => "../examples/test_flowtime.json",
+    #     # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
+    #     "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+    #     "debug" => true,
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
+    #     "fallback_run" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
+    #     # "fallback_run" => nothing
+    # )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]
@@ -68,7 +68,7 @@ function main()
     println(YELLOW_FG("READING EXPERIMENT FILE ($(configuration_filename))..."))
     configuration = PerformExperiment.read_configuration(configuration_filename)
     pad = 25
-    common = PerformExperiment.experiment_variables(configuration, configuration_filename, analysis_only)
+    common = PerformExperiment.experiment_variables(configuration, configuration_filename, analysis_only, fallback_run)
     for i in keys(common)
         println(rpad(i*":", pad, " ")*common[i])
     end
@@ -83,6 +83,7 @@ function main()
     solver_variants = PerformExperiment.compute_solver_variants(configuration, configuration_filename)
     println(YELLOW_FG("CREATING OUTPUT DIR $(common["output_directory"])..."))
     mkpath(common["output_directory"])
+    println("$(common["output_directory"])")
     mkpath(common["output_directory"]*"/solver_results/")
     mkpath(common["output_directory"]*"/analysis/")
     # for each solver and instance, build the command to run
@@ -116,8 +117,9 @@ function main()
     end
     if fallback_run !== nothing
         println(GREEN_FG("$(length(invalid_experiments)) tests to run again"))
-        println("setting $(fallback_run) threads")
-        PerformExperiment.tsp_set(fallback_run)
+        fallback_threads = configuration["fallback_threads"]
+        println("setting $(fallback_threads) threads")
+        PerformExperiment.tsp_set(fallback_threads)
         for experiment_id in invalid_experiments
             command = solver_variant_with_instance[experiment_id]["command"]
             if is_debug

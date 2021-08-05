@@ -31,11 +31,17 @@ function draw_arpd_diagrams(solvers_arpd_points, inst_class, output_dir, name=""
             x = tmp[1]
             ys = tmp[2]
             mean_y = mean(ys)
+            # scatter!(
+            #     [ x ],[ mean_y ],
+            #     marker=:xcross,
+            #     label=false,
+            #     yerror=ys,
+            #     markerstrokecolor=:auto
+            # )
             scatter!(
-                [ x ],[ mean_y ],
+                fill(x, length(ys)), ys,
                 marker=:xcross,
                 label=false,
-                yerror=ys,
                 markerstrokecolor=:auto
             )
             annotate!(x, mean_y, text(solver, :top, 5))
@@ -133,7 +139,7 @@ function generate_pareto_diagrams(instance_classes, arpd_refs, custom_arpds_data
                 tmp_ys = []
                 for (i,a) in enumerate(ys)
                     push!(tmp_ys, collect(map((b)-> begin
-                        ref_value = float(instance_classes[inst_class][i].bk_primal)
+                        ref_value = float(references_primal[i])
                         rpd = (float(b)-ref_value)/ref_value*100
                         rpd
                     end, a)))

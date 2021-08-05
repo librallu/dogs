@@ -28,4 +28,6 @@ for each solver, then generates various performance analysis.
  - [X] custom ARPD tables with custom time_limit for curves + inclusion of external ARPD
  - [X] re-run missed experiments with lower number of threads
  - [ ] add multiple_y types to the best known table
+ - [ ] call fallback between the runs and the analysis
+ - [ ] report for each instance class, the number of optimal proofs
  - [ ] if Cartesian product over parameters, perform analysis similar to the ROADEF18 paper

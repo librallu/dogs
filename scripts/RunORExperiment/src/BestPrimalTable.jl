@@ -62,14 +62,14 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
         res_tex *= "c"
     end
     res_tex *="}\n"
-    res_tex *= "instance & best_known"
+    res_tex *= "instance & best-known"
     # add external data
     external_data_list = collect(keys(custom_external))
     for s in external_data_list
-        res_tex *= " & $(s)"
+        res_tex *= " & $(replace(s,"_"=>"\\_"))"
     end
     for s in solver_variants
-        res_tex *= " & $(s["name"])$(s["solver_params_compact"])"
+        res_tex *= replace(" & $(s["name"])$(s["solver_params_compact"])","_"=>"\\_")
     end
     res_tex *= " \\\\ \n \\hline \n"
     res = "instance,best_known"
@@ -90,7 +90,7 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
     pad = 16
     for inst in instances_csv
         res *= inst.name*","*"$(inst.bk_primal)"
-        res_tex *= "$(rpad(inst.name, pad, " ")) & $(rpad(human_format_number(inst.bk_primal), pad, " "))"
+        res_tex *= replace("$(rpad(inst.name, pad, " ")) & $(rpad(human_format_number(inst.bk_primal), pad, " "))","_"=>"\\_")
         tex_vals = []
         # add external data
         for k in external_data_list
@@ -134,15 +134,22 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
             end
         end
         # write latex line
-        min_val = min(tex_vals...)
+        min_val = min(filter((v)-> v!== missing, tex_vals)...)
         for v in tex_vals
-            tex_str = human_format_number(v)
-            if v == min_val && v <= inst.bk_primal
-                tex_str = latex_bold(tex_str)
+            if v !== missing
+                # println("min_val:$(min_val)\tbkprimal:$(inst.bk_primal)")
+                tex_str = human_format_number(v)
+                if v == min_val && v <= inst.bk_primal
+                    tex_str = latex_bold(tex_str)
+                end
+                res_tex *= " & $(rpad(
+                    "$(tex_str)", pad, " "
+                ))"
+            else
+                res_tex *= " & $(rpad(
+                    "-", pad, " "
+                ))"
             end
-            res_tex *= " & $(rpad(
-                "$(tex_str)", pad, " "
-            ))"
         end
         res *= "\n"
         res_tex *= "\\\\ \n"

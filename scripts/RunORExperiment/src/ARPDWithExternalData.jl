@@ -10,6 +10,9 @@ function get_best_value_before_time(stats, time_limit, epsilon=0.01)
     if time_limit < epsilon
         time_limit = epsilon
     end
+    if "primal_list" in keys(stats)
+        return sum(stats["primal_list"])/length(stats["primal_list"])
+    end
     previous = nothing
     for point in stats["primal_pareto_diagram"]
         if point["time"] > time_limit

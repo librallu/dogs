@@ -172,6 +172,10 @@ function build_analysis(configuration, common, instances_csv, solver_variants, s
         mkpath(bk_path)
         custom_bk = configuration["analysis"]["custom_best_known_tables"]
         for bk in custom_bk
+            algo_pos = Dict()
+            for (i,e) in enumerate(bk["algorithms"])
+                algo_pos[e] = i
+            end
             algo_set = Set(bk["algorithms"])
             name = bk["name"]
             # build solver variants
@@ -181,6 +185,7 @@ function build_analysis(configuration, common, instances_csv, solver_variants, s
                     push!(custom_solver_variants, solver)
                 end
             end
+            sort!(custom_solver_variants, by=(e)->algo_pos[e["id"]])
             # add external information
             custom_external = Dict() # name -> inst_name -> value
             for s in keys(external_best_known)

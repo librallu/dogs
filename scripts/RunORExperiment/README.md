@@ -31,3 +31,7 @@ for each solver, then generates various performance analysis.
  - [ ] call fallback between the runs and the analysis
  - [ ] report for each instance class, the number of optimal proofs
  - [ ] if Cartesian product over parameters, perform analysis similar to the ROADEF18 paper
+
+# known issues
+
+- [ ] some latex outputs have "_" not escaped

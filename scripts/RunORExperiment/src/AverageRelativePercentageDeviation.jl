@@ -6,6 +6,8 @@ using Crayons
 using Crayons.Box
 using Statistics
 
+include("ARPDWithExternalData.jl")
+
 """
 returns true if sequence A is statistically significantly better than sequence B.
 According to the signed Wilcoxon signed-rank test
@@ -23,7 +25,7 @@ One row per instance class.
 Generates a CSV file and a latex file.
 :arpd_refs: instance name -> objective value
 """
-function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_variant_and_instance, output_filename)
+function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_variant_and_instance, output_filename, cpu_regularization=nothing)
     # tex preembule
     res_tex = "\\begin{tabular}{c|"
     for _ in solver_variants
@@ -69,7 +71,12 @@ function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_v
                 stats = solver_variant_and_instance[inst_solver_id]["stats"]
                 reference_primal = arpd_refs[inst.name]
                 if "best_primal" in keys(stats)
-                    solver_primal = float(stats["best_primal"])
+                    if cpu_regularization !== nothing
+                        time = cpu_regularization * inst.time_limit
+                        solver_primal = ARPDWithExternalData.get_best_value_before_time(stats, time)
+                    else
+                        solver_primal = float(stats["best_primal"])
+                    end
                 elseif "primal_list" in keys(stats)
                     solver_primal = mean(stats["primal_list"])
                 else
@@ -107,7 +114,7 @@ function generate_arpd_table(instances_csv, arpd_refs, solver_variants, solver_v
         res *= "\n"
         # update tex
         pad = 12
-        res_tex *= "$(rpad(inst_class, pad, " "))"
+        res_tex *= "$(rpad(replace(inst_class, "_"=>"\\_"), pad, " "))"
         for s in solver_variants
             s_name = "$(s["name"])$(s["solver_params_compact"])"
             arpd = round(solver_arpd[s_name], digits=2)

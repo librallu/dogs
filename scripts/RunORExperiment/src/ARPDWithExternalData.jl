@@ -29,16 +29,28 @@ One row per instance class.
 Generates a CSV file and a latex file.
 :arpd_refs: instance name -> objective value
 """
-function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants, solver_variant_and_instance, output_filename, external_name, external_data)
+function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants, solver_variant_and_instance, output_filename, external_name, external_data, variants_list)
+    filtered_solver_variants = solver_variants
+    if variants_list !== nothing
+        filtered_solver_variants = []
+        for e in variants_list
+            for s in solver_variants
+                id = s["name"]*s["solver_params_compact"]
+                if id == e
+                    push!(filtered_solver_variants, s)
+                end
+            end
+        end
+    end
     # tex preembule
     res_tex = "\\begin{tabular}{c|"
     res_tex *= "c|"
-    for _ in solver_variants
+    for _ in filtered_solver_variants
         res_tex *= "c"
     end
     res_tex *= "}\n"
     res_tex *= "instance class & $(external_name)"
-    for s in solver_variants # for each solver
+    for s in filtered_solver_variants # for each solver
         solver_name = "$(s["name"])$(s["solver_params_compact"])"
         solver_name = replace(solver_name, "_"=>"\\_")
         res_tex *= " & $(solver_name)"
@@ -46,7 +58,7 @@ function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants,
     res_tex *= " \\\\ \n\\hline\n"
     # csv preembule
     res = "instance_class"
-    for s in solver_variants
+    for s in filtered_solver_variants
         res *= ","*s["name"]*s["solver_params_compact"]
     end
     res *= "\n"
@@ -71,7 +83,7 @@ function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants,
         external_arpd = external_data[inst_class]["arpd"]
         res *= ",$(external_arpd)"
         # display other solvers
-        for s in solver_variants # for each solver
+        for s in filtered_solver_variants # for each solver
             arpd = 0
             solver_name = "$(s["name"])$(s["solver_params_compact"])"
             solver_lists[solver_name] = []
@@ -94,7 +106,7 @@ function generate_external_arpd_table(instances_csv, arpd_refs, solver_variants,
         res_tex *= "$(rpad(inst_class, pad, " "))"
         tmp_arpd = round(external_arpd, digits=2)
         res_tex *= " & $(rpad(tmp_arpd, pad, " "))"
-        for s in solver_variants
+        for s in filtered_solver_variants
             s_name = "$(s["name"])$(s["solver_params_compact"])"
             arpd = round(solver_arpd[s_name], digits=2)
             v_tex = "$(arpd)"

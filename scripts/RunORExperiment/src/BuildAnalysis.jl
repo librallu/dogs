@@ -218,8 +218,62 @@ function build_analysis(configuration, common, instances_csv, solver_variants, s
             solver_variants,
             solver_variant_with_instance,
             "$(custom_arpd_path)/$(algo_name)_arpd_table.csv",
-            algo_name, algo_data
+            algo_name, algo_data, configuration["analysis"]["arpd_comp_only"]
         )
+    end
+    # generate ARPD tables from primal results
+    if "external_primal_table_arpd" in keys(configuration["analysis"])
+        custom_primal_table_arpd = configuration["analysis"]["external_primal_table_arpd"]
+        considered_algos = Set(configuration["analysis"]["arpd_comp_only"])
+        for algo in custom_primal_table_arpd 
+            tmp_solver_variants = collect(filter(e -> e["id"] in considered_algos, solver_variants))
+            variant = Dict()
+            variant["name"] = algo["name"]
+            variant["id"] = algo["name"]
+            variant["solver_params_compact"] = ""
+            push!(tmp_solver_variants, variant)
+            # populate solver_variant_with_instance
+            csv_filename = abspath(joinpath(
+                configuration_filename, "..",
+                algo["file"]
+            ))
+            csv = PerformExperiment.read_csv(csv_filename)
+            for line in csv
+                v = getindex(
+                    line, Meta.parse("$(algo["primal"])")
+                )
+                tmp_dict = Dict()
+                tmp2_dict = Dict()
+                tmp2_dict["primal_list"] = [v]
+                tmp_dict["stats"] = tmp2_dict
+                solver_variant_with_instance["$(algo["name"])_$(line.name)"] = tmp_dict
+            end
+            AverageRelativePercentageDeviation.generate_arpd_table(
+                instances_csv,
+                arpd_refs,
+                tmp_solver_variants,
+                solver_variant_with_instance,
+                "$(common["output_directory"])/analysis/custom_arpd_tables/$(algo["name"])_comp.csv",
+                algo["cpu_regularization_factor"]
+            )
+        end
+    end
+    # generate ARPD tables from primal_list solvers
+    if "custom_arpd_tables" in keys(configuration["analysis"])
+        tables = configuration["analysis"]["custom_arpd_tables"]
+        for t in tables
+            table_name = join(t["algos"], "_")
+            considered_algos = Set(t["algos"])
+            tmp_solver_variants = collect(filter(e -> e["id"] in considered_algos, solver_variants))
+            AverageRelativePercentageDeviation.generate_arpd_table(
+                instances_csv,
+                arpd_refs,
+                tmp_solver_variants,
+                solver_variant_with_instance,
+                "$(common["output_directory"])/analysis/custom_arpd_tables/$(table_name).csv",
+                t["cpu_regularization_factor"]
+            )
+        end
     end
 end
 

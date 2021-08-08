@@ -109,7 +109,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
     /** inserts a new node in the bound set */
     pub fn insert(&mut self, b:&B) {
         // updates BoundSet
-        match self.set.get_mut(&b) {
+        match self.set.get_mut(b) {
             None => {
                 self.set.insert(*b, 1);
             },
@@ -125,7 +125,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
     pub fn remove(&mut self, b:&B) {
         // updates BoundingSet
         let mut to_remove:bool = false;
-        if let Some(v) = self.set.get_mut(&b) {
+        if let Some(v) = self.set.get_mut(b) {
             match *v {
                 0 => {
                     panic!("[BoundingCombinator] existing entry with value 0 (should be >= 1)");
@@ -137,7 +137,7 @@ impl<B> BoundSet<B> where B:Ord+Display+Clone+Copy+Into<i64> {
             panic!("[BoundingCombinator] removing a bound value not-existing");
         }
         if to_remove {
-            self.set.remove(&b);
+            self.set.remove(b);
             // updates global bound
             let mut logging_required = false;
             match self.global_bound {

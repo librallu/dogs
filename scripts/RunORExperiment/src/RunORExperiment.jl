@@ -99,6 +99,7 @@ function main()
             if is_debug
                 println(command)
             else
+                println("running $command ...")
                 run(`sh -c $command`)
             end
         end

@@ -36,20 +36,20 @@ function main()
     PerformExperiment.tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
-    # parsed_args = parse_commandline()
+    parsed_args = parse_commandline()
     ### debug comment (otherwise JIT compilation is way too slow!)
-    parsed_args = Dict(
-        # "configuration" => "../examples/test_flowtime.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
-        "configuration" => "../../../dogs-pfsp/experiments/vfr_large_makespan.experiment.json",
-        "debug" => true,
-        # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
-        # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
-        "analysis_only" => "../../../dogs-pfsp/experiments/vfr_large_makespan_2021_07_29/"
-        # "fallback_run" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
-        # "fallback_run" => nothing
-    )
+    # parsed_args = Dict(
+    #     # "configuration" => "../examples/test_flowtime.json",
+    #     "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
+    #     # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+    #     # "configuration" => "../../../dogs-pfsp/experiments/vfr_large_makespan.experiment.json",
+    #     "debug" => true,
+    #     "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/vfr_large_makespan_2021_07_29/"
+    #     # "fallback_run" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
+    #     # "fallback_run" => nothing
+    # )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]

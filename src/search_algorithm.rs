@@ -18,6 +18,16 @@ pub trait StoppingCriterion:Clone {
 }
 
 /**
+stopping criterion that never stops
+*/
+#[derive(Debug, Clone, Default)]
+pub struct NeverStoppingCriterion {}
+
+impl StoppingCriterion for NeverStoppingCriterion {
+    fn is_finished(&self) -> bool { false }
+}
+
+/**
  * stops the search after a given amount of time searching
  */
 #[derive(Debug, Clone)]
@@ -39,6 +49,7 @@ impl TimeStoppingCriterion {
         }
     }
 }
+
 
 impl StoppingCriterion for TimeStoppingCriterion {
     fn is_finished(&self) -> bool {

@@ -118,7 +118,7 @@ pub trait PartialNeighborGeneration<N> {
 
 
 /**
-    Allows to identify a node. Useful to implement prefix-equivalences / bucket-lists
+    Allows to identify a node. Useful to implement g-cost-dominance / bucket-lists
     or tabu-search
  */
 pub trait Identifiable<N, Id> {

@@ -19,6 +19,20 @@ function time_to_objective(stats, objective)
 end
 
 """
+given a statistics object and a primal_objective, returns the time to find it, or "-"
+"""
+function time_to_improve(stats, objective)
+    res = "-"
+    for point in stats["primal_pareto_diagram"]
+        if point["primal"] < objective
+            res = "$(point["time"])"
+            break
+        end
+    end
+    return res
+end
+
+"""
 given a statistics object, returns the time to optimality or "-" if not optimal
 """
 function time_to_optimal(stats)
@@ -81,6 +95,7 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
         res *= ",$(s["name"])$(s["solver_params_compact"])_primal"
         if time_to_best_known
             res *= ",$(s["name"])$(s["solver_params_compact"])_time_to_best_known"
+            res *= ",$(s["name"])$(s["solver_params_compact"])_time_to_improve"
         end
         if time_opt
             res *= ",$(s["name"])$(s["solver_params_compact"])_time_opt"
@@ -108,6 +123,7 @@ function generate_best_primal_table(instances_csv, custom_external, solver_varia
                 push!(tex_vals, v)
                 if time_to_best_known
                     res *= ","*"$(time_to_objective(stats, inst.bk_primal))"
+                    res *= ","*"$(time_to_improve(stats, inst.bk_primal))"
                 end
                 if time_opt
                     res *= ","*"$(time_to_optimal(stats))"

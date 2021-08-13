@@ -93,7 +93,7 @@ function main()
         solver_variants, common, instances_csv
     )
     # run each experiment if not analysis only
-    if analysis_only == "" && fallback_run === nothing
+    if analysis_only === nothing && fallback_run === nothing
         for experiment_id in keys(solver_variant_with_instance)
             command = solver_variant_with_instance[experiment_id]["command"]
             if is_debug

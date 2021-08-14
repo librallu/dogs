@@ -139,3 +139,21 @@ pub trait ParetoDominanceSpace<N> {
      */
     fn dominates(&self, a:&N, b:&N) -> bool;
 }
+
+
+/**
+    Represents a search space which there exists a bound on the distance between the root node and
+    any node. This kind of property is frequent in combinatorial branch-and-bounds.
+*/
+pub trait BoundedDistanceSpace<N> {
+    /** maximum distance between the root node and a state */
+    fn maximum_root_distance(&self) -> usize;
+
+    /** returns the distance from the root of a given node */
+    fn distance_from_root(&self, n:&N) -> usize;
+
+    /** returns the distance from root ratio (distance/distance_max) */
+    fn root_distance_ratio(&self, n:&N) -> f64 {
+        self.distance_from_root(n) as f64 / self.maximum_root_distance() as f64
+    }
+}

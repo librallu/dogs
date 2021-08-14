@@ -15,3 +15,9 @@ pub mod pruning;
 
 /** generic dual bound report */
 pub mod bounding;
+
+/** guide with bound mixing
+estimates the average value of the bound and the guide, and sums them, taking into account
+the distance from the root.
+*/
+pub mod guide_with_bound;

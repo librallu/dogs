@@ -167,4 +167,9 @@ pub trait BoundedDistanceSpace<N> {
 pub trait DecisionSpace<N,D> {
     /// gets the decision from the node
     fn decision(&self, n:&N) -> Option<D>;
+
+    /** aspiration criterion:
+    used in tabu search. If true, a tabu move is still autorized.
+    */
+    fn aspiration_criterion(&self, _n:&N) -> bool { false }
 }

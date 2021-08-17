@@ -202,7 +202,7 @@ where
         );
         if self.stats.expanded > 0 {
             println!(
-                "{:>25}{:>15.3}",
+                "{:>25}{:>15}",
                 "avg branching factor",
                 format((self.stats.generated as f64) / (self.stats.expanded as f64))
             );

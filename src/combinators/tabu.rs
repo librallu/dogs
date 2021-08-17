@@ -79,7 +79,7 @@ where
         self.s.neighbors(n).iter().filter(|neigh| {
             match self.s.decision(neigh) {
                 None => true,
-                Some(d) => !self.tenure.contains(&d)
+                Some(d) => !self.tenure.contains(&d) || self.s.aspiration_criterion(n)
             }
         }).cloned().collect()
     }

@@ -46,7 +46,7 @@ Some examples are available for various problems. For some of them, the DOGS imp
 - The permutation flowshop (makespan and flowtime minimization) [git repository](https://github.com/librallu/dogs-pfsp), [reference paper](https://www.researchgate.net/publication/344219325_Iterative_beam_search_algorithms_for_the_permutation_flowshop)
 
 
-## Some helpful tips
+## Some general helpful tips
 
 ### Install rust
 
@@ -81,16 +81,3 @@ We recommend using use [heaptrack](https://github.com/KDE/heaptrack).
 We recommend using Valgrind
 
 1. `valgrind --tool=callgrind --dump-instr=yes --collect-jumps=yes --simulate-cache=yes [PROGRAM] [ARGS]`
-
-
-### Iterating over files (Linux)
-
-```bash
-for f in `ls DIRNAME/*`; do COMMAND "${f}"; done
-```
-
-### Benchmarking
-
-This project uses [cargo-criterion](https://crates.io/crates/cargo-criterion).
-
-While cargo-criterion is installed, you can just call it by: `cargo criterion`

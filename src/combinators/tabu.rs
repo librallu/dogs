@@ -117,7 +117,7 @@ where
     Space: PartialNeighborGeneration<N>+SearchSpace<N,B>,
     B: PartialOrd+Copy,
 {
-    fn next_neighbor(&mut self, node: &mut N) -> Option<N> {
+    fn next_neighbor(&mut self, _node: &mut N) -> Option<N> {
         // TODO iterate until a node has not its decision in the tenure
         todo!()
         // self.s.next_neighbor(node)

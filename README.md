@@ -1,12 +1,13 @@
 # DOGS (Discrete Optimization Global Search) framework
 
 Implements various search algorithms within a unified paradigm (so far, mostly anytime tree search algorithms).
-See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tree_search_for_decoratorial_optimization) for more information about anytime tree search algorithms.
+See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tree_search_for_combinatorial_optimization) for more information about anytime tree search algorithms.
 
 ## Implemented components
 
 ### Tree search algorithms
 
+- [X] Greedy algorithm
 - [X] Partial Expansion Greedy algorithm
 - [X] Beam Search
 - [X] Best First Search
@@ -15,20 +16,21 @@ See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 - [X] Limited Discrepancy Search
 - [X] Partial Expansion (Iterative) Beam Search
 
-### Decorators
 
-- [X] Bounding decorator: measures dual bounds
-- [X] LDS decorator: limits the exploration of the tree to the nodes with few discrepancies
-- [X] G-cost dominance decorator: implements g-cost dominance
-- [X] Pruning decorator: prunes nodes that are dominated by the best-known solution
-- [X] Statistics decorator: reports various statistics of the search
+### Combinators
 
+- [X] Bounding combinator: measures dual bounds
+- [X] LDS combinator: limits the exploration of the tree to the nodes with few discrepancies
+- [X] G-cost dominance combinator: implements g-cost dominance
+- [X] Pruning combinator: prunes nodes that are dominated by the best-known solution
+- [X] Statistics combinator: reports various statistics of the search
+- [X] Tabu combinator: forbids decisions taken before in the search
 
 ### Roadmap: What's next?
 
 - [ ] Possible bug in "is_optimal" if the time limit is exceeded before the search makes some
       heuristic fathoming. In this case, the algorithm will report "optimal" while it is not.
-- [ ] Each component (Search algorithm, decorator, ... can produce a JSON object)
+- [ ] Each component (Search algorithm, combinator, ... can produce a JSON object)
     This JSON object can then be written in a file or combined with others by higher components.
 - [ ] Use Iterator trait for partial expansion (more idiomatic)
 - [ ] Performance improvement for the PruningDecorator

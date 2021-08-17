@@ -5,7 +5,7 @@ use std::hash::Hash;
 use fxhash::FxHashMap;
 
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
-use crate::search_decorator::SearchSpaceDecorator;
+use crate::search_combinator::SearchSpaceCombinator;
 
 /**
 implements a dominance information used to represent a previous state (g-cost and iter number)
@@ -93,26 +93,26 @@ impl<Id, B> DominanceStore<Id, B> where Id:Eq+Hash, B:PartialOrd {
 
 
 
-/// Prefix Equivalence Dominance Decorator
+/// Prefix Equivalence Dominance Combinator
 #[derive(Debug)]
-pub struct GcostDominanceTsDecorator<Space, Id, B> {
+pub struct GcostDominanceTsCombinator<Space, Id, B> {
     s: Space,
     current_iter: u32,
     store: DominanceStore<Id, B>,
 }
 
-impl<N,G,Space,Id,B> GuidedSpace<N,G> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N,G,Space,Id,B> GuidedSpace<N,G> for GcostDominanceTsCombinator<Space, Id, B>
 where Space:GuidedSpace<N,G>
 {
     fn guide(&mut self, n: &N) -> G { self.s.guide(n) }
 }
 
-impl<N,Sol,Space,Id,B> ToSolution<N,Sol> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N,Sol,Space,Id,B> ToSolution<N,Sol> for GcostDominanceTsCombinator<Space, Id, B>
 where Space:ToSolution<N,Sol> {
     fn solution(&mut self, node: &mut N) -> Sol { self.s.solution(node) }
 }
 
-impl<N,Space,Id,B> SearchSpace<N,B> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N,Space,Id,B> SearchSpace<N,B> for GcostDominanceTsCombinator<Space, Id, B>
 where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd, Id:Hash+Eq
 {
     fn initial(&mut self) -> N { self.s.initial() }
@@ -148,7 +148,7 @@ where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd, Id:Hash+Eq
     }
 }
 
-impl<N, Space, Id, B> TotalNeighborGeneration<N> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N, Space, Id, B> TotalNeighborGeneration<N> for GcostDominanceTsCombinator<Space, Id, B>
 where 
     Space: TotalNeighborGeneration<N>+Identifiable<N, Id>+SearchSpace<N,B>,
     Id: Eq + Hash,
@@ -163,12 +163,12 @@ where
     }
 }
 
-impl<Space, Id, B> SearchSpaceDecorator<Space> for GcostDominanceTsDecorator<Space, Id, B> {
+impl<Space, Id, B> SearchSpaceCombinator<Space> for GcostDominanceTsCombinator<Space, Id, B> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
 
-impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:PartialOrd {
+impl<Space, Id, B> GcostDominanceTsCombinator<Space, Id, B> where Id:Hash+Eq, B:PartialOrd {
     /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
@@ -182,13 +182,13 @@ impl<Space, Id, B> GcostDominanceTsDecorator<Space, Id, B> where Id:Hash+Eq, B:P
     }
 }
 
-impl<N,Space,Id,B> ParetoDominanceSpace<N> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N,Space,Id,B> ParetoDominanceSpace<N> for GcostDominanceTsCombinator<Space, Id, B>
 where Space: ParetoDominanceSpace<N>
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
-impl<N,Space,Id,B> PartialNeighborGeneration<N> for GcostDominanceTsDecorator<Space, Id, B>
+impl<N,Space,Id,B> PartialNeighborGeneration<N> for GcostDominanceTsCombinator<Space, Id, B>
 where
     Space: PartialNeighborGeneration<N>+Identifiable<N, Id>+SearchSpace<N,B>,
     Id: Eq + Hash,

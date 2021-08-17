@@ -11,13 +11,13 @@ use crate::search_space::{
     ToSolution,
     BoundedDistanceSpace,
 };
-use crate::search_decorator::SearchSpaceDecorator;
+use crate::search_combinator::SearchSpaceCombinator;
 
 /**
 guide_with_bound decorator: generates a guide that incorporates the bound and the guide dynamically.
 */
 #[derive(Debug)]
-pub struct GuideWithBoundDecorator<Space,N,B> {
+pub struct GuideWithBoundCombinator<Space,N,B> {
     s: Space,
     avg_bound: Vec<f64>,
     avg_guide: Vec<f64>,
@@ -26,7 +26,7 @@ pub struct GuideWithBoundDecorator<Space,N,B> {
     phantom_b: PhantomData<B>,
 }
 
-impl<N,G,B,Space> GuidedSpace<N,G> for GuideWithBoundDecorator<Space,N,B> 
+impl<N,G,B,Space> GuidedSpace<N,G> for GuideWithBoundCombinator<Space,N,B> 
 where 
     Space:GuidedSpace<N,G>+SearchSpace<N,B>+BoundedDistanceSpace<N>,
     G:Into<f64>+From<f64>,
@@ -52,12 +52,12 @@ where
     }
 }
 
-impl<N,Sol,Space,B> ToSolution<N,Sol> for GuideWithBoundDecorator<Space,N,B>
+impl<N,Sol,Space,B> ToSolution<N,Sol> for GuideWithBoundCombinator<Space,N,B>
 where Space:ToSolution<N,Sol> {
     fn solution(&mut self, node: &mut N) -> Sol { self.s.solution(node) }
 }
 
-impl<N,Space,B> SearchSpace<N,B> for GuideWithBoundDecorator<Space,N,B>
+impl<N,Space,B> SearchSpace<N,B> for GuideWithBoundCombinator<Space,N,B>
 where Space:SearchSpace<N,B>+BoundedDistanceSpace<N>, B:serde::Serialize+PartialOrd+Clone
 {
     fn initial(&mut self) -> N { self.s.initial() }
@@ -98,7 +98,7 @@ where Space:SearchSpace<N,B>+BoundedDistanceSpace<N>, B:serde::Serialize+Partial
 }
 
 
-impl<N, Space,B> TotalNeighborGeneration<N> for GuideWithBoundDecorator<Space,N,B>
+impl<N, Space,B> TotalNeighborGeneration<N> for GuideWithBoundCombinator<Space,N,B>
 where 
     Space: TotalNeighborGeneration<N>
 {
@@ -106,12 +106,12 @@ where
     fn neighbors(&mut self, n: &mut N) -> Vec<N> { self.s.neighbors(n) }
 }
 
-impl<Space,N,B> SearchSpaceDecorator<Space> for GuideWithBoundDecorator<Space,N,B> {
+impl<Space,N,B> SearchSpaceCombinator<Space> for GuideWithBoundCombinator<Space,N,B> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
 
-impl<Space,N,B> GuideWithBoundDecorator<Space,N,B> where Space:BoundedDistanceSpace<N> {
+impl<Space,N,B> GuideWithBoundCombinator<Space,N,B> where Space:BoundedDistanceSpace<N> {
     /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         let max_depth = s.maximum_root_distance();
@@ -126,7 +126,7 @@ impl<Space,N,B> GuideWithBoundDecorator<Space,N,B> where Space:BoundedDistanceSp
     }
 }
 
-impl<N, Id, Space,B> Identifiable<N, Id> for GuideWithBoundDecorator<Space,N,B>
+impl<N, Id, Space,B> Identifiable<N, Id> for GuideWithBoundCombinator<Space,N,B>
 where
     Space: Identifiable<N, Id>,
 {
@@ -134,21 +134,21 @@ where
 }
 
 
-impl<N,Space,B> ParetoDominanceSpace<N> for GuideWithBoundDecorator<Space,N,B>
+impl<N,Space,B> ParetoDominanceSpace<N> for GuideWithBoundCombinator<Space,N,B>
 where Space: ParetoDominanceSpace<N>
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
 
-impl<N, Space,B> PartialNeighborGeneration<N> for GuideWithBoundDecorator<Space,N,B>
+impl<N, Space,B> PartialNeighborGeneration<N> for GuideWithBoundCombinator<Space,N,B>
 where 
     Space: PartialNeighborGeneration<N>
 {
     fn next_neighbor(&mut self, node: &mut N) -> Option<N> { self.s.next_neighbor(node) }
 }
 
-impl<N,Space,B> BoundedDistanceSpace<N> for GuideWithBoundDecorator<Space,N,B>
+impl<N,Space,B> BoundedDistanceSpace<N> for GuideWithBoundCombinator<Space,N,B>
 where Space:BoundedDistanceSpace<N> {
     fn maximum_root_distance(&self) -> usize { self.s.maximum_root_distance() }
 

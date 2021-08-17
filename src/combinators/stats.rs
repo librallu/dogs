@@ -7,7 +7,7 @@ use serde_json::json;
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, Identifiable, TotalNeighborGeneration, PartialNeighborGeneration, ParetoDominanceSpace, ToSolution};
-use crate::search_decorator::SearchSpaceDecorator;
+use crate::search_combinator::SearchSpaceCombinator;
 
 /// search statistics data (at a given time)
 #[derive(Clone, Debug)]
@@ -30,7 +30,7 @@ pub struct PerfProfileEntry<B> {
     v: Option<B>
 }
 
-/// Statistics tree search Decorator
+/// Statistics tree search Combinator
 impl PerfProfilePoint {
     fn new() -> PerfProfilePoint {
         PerfProfilePoint {
@@ -48,7 +48,7 @@ impl PerfProfilePoint {
 
 /** stats decorator. Stores statistics data-structures and reference to the logger. */
 #[derive(Debug)]
-pub struct StatTsDecorator<Space, B> {
+pub struct StatTsCombinator<Space, B> {
     s: Space,
     stats: PerfProfilePoint,
     t_start: SystemTime,
@@ -59,7 +59,7 @@ pub struct StatTsDecorator<Space, B> {
     logging_id_obj: Option<usize>,
 }
 
-impl<N,G,Space,B> GuidedSpace<N,G> for StatTsDecorator<Space,B>
+impl<N,G,Space,B> GuidedSpace<N,G> for StatTsCombinator<Space,B>
 where 
     Space: GuidedSpace<N,G>,
     B: Serialize
@@ -71,7 +71,7 @@ where
 }
 
 
-impl<N,Sol,Space,B> ToSolution<N,Sol> for StatTsDecorator<Space, B>
+impl<N,Sol,Space,B> ToSolution<N,Sol> for StatTsCombinator<Space, B>
 where Space:ToSolution<N,Sol>, B:serde::Serialize {
     fn solution(&mut self, node: &mut N) -> Sol {
         self.s.solution(node)
@@ -79,7 +79,7 @@ where Space:ToSolution<N,Sol>, B:serde::Serialize {
 }
 
 
-impl<N,Space,B> SearchSpace<N,B> for StatTsDecorator<Space,B>
+impl<N,Space,B> SearchSpace<N,B> for StatTsCombinator<Space,B>
 where 
     Space: SearchSpace<N,B>,
     B: Clone+Serialize+Into<i64>+PartialOrd+Copy+std::fmt::Display
@@ -224,7 +224,7 @@ where
 }
 
 
-impl<N, Space, B> TotalNeighborGeneration<N> for StatTsDecorator<Space,B>
+impl<N, Space, B> TotalNeighborGeneration<N> for StatTsCombinator<Space,B>
 where 
     Space: TotalNeighborGeneration<N>,
     B: Serialize,
@@ -250,7 +250,7 @@ where
     }
 }
 
-impl<N, Space, B> PartialNeighborGeneration<N> for StatTsDecorator<Space,B>
+impl<N, Space, B> PartialNeighborGeneration<N> for StatTsCombinator<Space,B>
 where 
     Space: PartialNeighborGeneration<N>,
     B: Serialize,
@@ -274,7 +274,7 @@ where
 }
 
 
-impl<N, B, Id, Space> Identifiable<N, Id> for StatTsDecorator<Space, B>
+impl<N, B, Id, Space> Identifiable<N, Id> for StatTsCombinator<Space, B>
 where
     Space: Identifiable<N, Id>,
     B: Serialize,
@@ -282,11 +282,11 @@ where
     fn id(&self, n: &mut N) -> Id { self.s.id(n) }
 }
 
-impl<Space, B> SearchSpaceDecorator<Space> for StatTsDecorator<Space, B> {
+impl<Space, B> SearchSpaceCombinator<Space> for StatTsCombinator<Space, B> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
-impl<Space, B:Serialize+Copy+Display> StatTsDecorator<Space, B> {
+impl<Space, B:Serialize+Copy+Display> StatTsCombinator<Space, B> {
     /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         Self {
@@ -344,7 +344,7 @@ impl<Space, B:Serialize+Copy+Display> StatTsDecorator<Space, B> {
 }
 
 
-impl<N,Space,B> ParetoDominanceSpace<N> for StatTsDecorator<Space, B>
+impl<N,Space,B> ParetoDominanceSpace<N> for StatTsCombinator<Space, B>
 where 
     Space: ParetoDominanceSpace<N>,
     B: Serialize,

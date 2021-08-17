@@ -21,3 +21,6 @@ estimates the average value of the bound and the guide, and sums them, taking in
 the distance from the root.
 */
 pub mod guide_with_bound;
+
+/** tabu combinator (allows to forbid some moves depending on the search history. */
+pub mod tabu;

@@ -9,8 +9,8 @@ use crate::search_manager::SearchManager;
 use crate::search_space::{SearchSpace, GuidedSpace, PartialNeighborGeneration};
 use crate::search_algorithm::{BuildableWithInteger, SearchAlgorithm, StoppingCriterion};
 
-use crate::tree_search::algo::helper::guided_node::GuidedNode;
-use crate::tree_search::algo::helper::iterative::IterativeSearch;
+use crate::tree_search::helper::guided_node::GuidedNode;
+use crate::tree_search::helper::iterative::IterativeSearch;
 
 /**
 implements a partial expansion beam search

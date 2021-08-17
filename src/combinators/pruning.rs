@@ -9,30 +9,30 @@ use crate::search_space::{
     ParetoDominanceSpace,
     ToSolution
 };
-use crate::search_decorator::SearchSpaceDecorator;
+use crate::search_combinator::SearchSpaceCombinator;
 
 /**
 pruning decorator: stores the best known solution and counts the number of prunings for statistics.
 */
 #[derive(Debug)]
-pub struct PruningDecorator<Space, B> {
+pub struct PruningCombinator<Space, B> {
     s: Space,
     best_val: Option<B>,
     nb_prunings: u64
 }
 
-impl<N,G,Space,B> GuidedSpace<N,G> for PruningDecorator<Space, B> 
+impl<N,G,Space,B> GuidedSpace<N,G> for PruningCombinator<Space, B> 
 where Space:GuidedSpace<N,G>
 {
     fn guide(&mut self, n: &N) -> G { self.s.guide(n) }
 }
 
-impl<N,Sol,Space,B> ToSolution<N,Sol> for PruningDecorator<Space, B>
+impl<N,Sol,Space,B> ToSolution<N,Sol> for PruningCombinator<Space, B>
 where Space:ToSolution<N,Sol> {
     fn solution(&mut self, node: &mut N) -> Sol { self.s.solution(node) }
 }
 
-impl<N,Space,B> SearchSpace<N,B> for PruningDecorator<Space,B>
+impl<N,Space,B> SearchSpace<N,B> for PruningCombinator<Space,B>
 where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd+Clone
 {
     fn initial(&mut self) -> N { self.s.initial() }
@@ -86,7 +86,7 @@ where Space:SearchSpace<N,B>, B:serde::Serialize+PartialOrd+Clone
 }
 
 
-impl<N, Space, B> TotalNeighborGeneration<N> for PruningDecorator<Space,B>
+impl<N, Space, B> TotalNeighborGeneration<N> for PruningCombinator<Space,B>
 where 
     Space: TotalNeighborGeneration<N> + SearchSpace<N, B>,
     B: PartialOrd+Copy,
@@ -112,19 +112,19 @@ where
     }
 }
 
-impl<Space, B> SearchSpaceDecorator<Space> for PruningDecorator<Space, B> {
+impl<Space, B> SearchSpaceCombinator<Space> for PruningCombinator<Space, B> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
 
-impl<Space, B> PruningDecorator<Space, B> {
+impl<Space, B> PruningCombinator<Space, B> {
     /** builds the decorator around a search space */
     pub fn new(s: Space) -> Self {
         Self {s, best_val: None, nb_prunings: 0}
     }
 }
 
-impl<N, B, Id, Space> Identifiable<N, Id> for PruningDecorator<Space, B>
+impl<N, B, Id, Space> Identifiable<N, Id> for PruningCombinator<Space, B>
 where
     Space: Identifiable<N, Id>,
 {
@@ -132,14 +132,14 @@ where
 }
 
 
-impl<N,Space,B> ParetoDominanceSpace<N> for PruningDecorator<Space, B>
+impl<N,Space,B> ParetoDominanceSpace<N> for PruningCombinator<Space, B>
 where Space: ParetoDominanceSpace<N>
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
 
-impl<N, Space, B> PartialNeighborGeneration<N> for PruningDecorator<Space,B>
+impl<N, Space, B> PartialNeighborGeneration<N> for PruningCombinator<Space,B>
 where 
     Space: PartialNeighborGeneration<N>+SearchSpace<N,B>,
     B: PartialOrd+Copy,

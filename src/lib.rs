@@ -49,10 +49,15 @@ pub mod metric_logger;
 /**
 Search space decorator traits + procedural macros
 */
-pub mod search_decorator;
+pub mod search_combinator;
 
 
 // directories
+
+/**
+includes search combinators
+*/
+pub mod combinators;
 
 /**
 includes tree search algorithms

@@ -7,7 +7,7 @@ use std::rc::Rc;
 use crate::search_manager::SearchManager;
 use crate::search_algorithm::{StoppingCriterion, SearchAlgorithm};
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration};
-use crate::tree_search::algo::helper::guided_node::GuidedNode;
+use crate::tree_search::helper::guided_node::GuidedNode;
 
 /**
 Best First Search structure

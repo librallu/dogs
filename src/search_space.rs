@@ -53,7 +53,6 @@ pub trait SearchSpace<N,B> {
 
     /**
      displays various statistics about the search (nb nodes, etc.)
-     TODO: use export_statistics to get the statistics in the JSON format, and display them
      */
     fn display_statistics(&self) {}
 
@@ -123,7 +122,8 @@ pub trait PartialNeighborGeneration<N> {
  */
 pub trait Identifiable<N, Id> {
     /**
-        returns the ID of the node
+        returns the ID of the node. Used to represent a node in which multiple paths may lead
+        to the same node (DAG for instance)
      */
     fn id(&self, n: &mut N) -> Id;
 }
@@ -156,4 +156,15 @@ pub trait BoundedDistanceSpace<N> {
     fn root_distance_ratio(&self, n:&N) -> f64 {
         self.distance_from_root(n) as f64 / self.maximum_root_distance() as f64
     }
+}
+
+
+/** DecisionSpace. Each node can provide a decision
+    common usages:
+    - tabu search (forbid nodes providing a recent decision already taken: break cycles)
+    - search with reinforcement learning (each decision corresponds to a switch between a MDP states)
+*/
+pub trait DecisionSpace<N,D> {
+    /// gets the decision from the node
+    fn decision(&self, n:&N) -> Option<D>;
 }

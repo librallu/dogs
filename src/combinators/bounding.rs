@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 use crate::metric_logger::{Metric, MetricLogger};
 use crate::search_space::{SearchSpace, GuidedSpace, TotalNeighborGeneration, PartialNeighborGeneration, Identifiable, ParetoDominanceSpace, ToSolution};
-use crate::search_decorator::SearchSpaceDecorator;
+use crate::search_combinator::SearchSpaceCombinator;
 
 /**
 Provides methods to be called if a node is destroyed or inserted. 
@@ -185,7 +185,7 @@ where B:Ord+Display+Clone+Copy+Into<i64> {
  *  - TODO when a node bound is updated: update the global bound
  */
 #[derive(Debug)]
-pub struct BoundingDecorator<Space, B, N> {
+pub struct BoundingCombinator<Space, B, N> {
     /// wrapped search space
     s: Space,
     /// bound set to measure the bound
@@ -195,13 +195,13 @@ pub struct BoundingDecorator<Space, B, N> {
 }
 
 
-impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingDecorator<Space, B, N>
+impl<N,G,Space,B> GuidedSpace<LifetimeEventNode<N, B, BoundSet<B>>,G> for BoundingCombinator<Space, B, N>
 where Space:GuidedSpace<N,G>, B:Display+Ord+Copy+Into<i64>
 {
     fn guide(&mut self, n: &LifetimeEventNode<N, B, BoundSet<B>>) -> G { self.s.guide(&n.node) }
 }
 
-impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingDecorator<Space, B, N>
+impl <N,Sol,B,Space> ToSolution<LifetimeEventNode<N, B, BoundSet<B>>,Sol> for BoundingCombinator<Space, B, N>
 where
     Space: SearchSpace<N,B>+ToSolution<N,Sol>,
     B:Ord+Display+Copy+Into<i64>
@@ -212,7 +212,7 @@ where
 }
 
 
-impl<N,Space,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingDecorator<Space, B, N>
+impl<N,Space,B> SearchSpace<LifetimeEventNode<N, B, BoundSet<B>>,B> for BoundingCombinator<Space, B, N>
 where
     N:Clone,
     Space:SearchSpace<N,B>,
@@ -284,7 +284,7 @@ where
     }
 }
 
-impl<N, B, Space> TotalNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B, N>
+impl<N, B, Space> TotalNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingCombinator<Space, B, N>
 where
     Space: TotalNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Display+Copy+Into<i64>
@@ -309,12 +309,12 @@ where
 }
 
 
-impl<Space, B, N> SearchSpaceDecorator<Space> for BoundingDecorator<Space, B, N> {
+impl<Space, B, N> SearchSpaceCombinator<Space> for BoundingCombinator<Space, B, N> {
     fn unwrap(&self) -> &Space { &self.s }
 }
 
 
-impl<Space, B, N> BoundingDecorator<Space, B, N> where B:Ord+Display+Copy+Into<i64> {
+impl<Space, B, N> BoundingCombinator<Space, B, N> where B:Ord+Display+Copy+Into<i64> {
     /** unwraps itself */
     pub fn unwrap(&self) -> &Space { &self.s }
 
@@ -349,7 +349,7 @@ impl<Space, B, N> BoundingDecorator<Space, B, N> where B:Ord+Display+Copy+Into<i
 
 }
 
-impl<N, B, Id, Space> Identifiable<LifetimeEventNode<N, B, BoundSet<B>>, Id> for BoundingDecorator<Space, B, N>
+impl<N, B, Id, Space> Identifiable<LifetimeEventNode<N, B, BoundSet<B>>, Id> for BoundingCombinator<Space, B, N>
 where
     Space: Identifiable<N, Id>,
     B:Ord+Display+Copy+Into<i64>,
@@ -358,13 +358,13 @@ where
 }
 
 
-impl<N,Space,B> ParetoDominanceSpace<N> for BoundingDecorator<Space, B, N>
+impl<N,Space,B> ParetoDominanceSpace<N> for BoundingCombinator<Space, B, N>
 where Space: ParetoDominanceSpace<N>,
 {
     fn dominates(&self, a:&N, b:&N) -> bool { self.s.dominates(a,b) }
 }
 
-impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingDecorator<Space, B, N>
+impl<N,Space,B> PartialNeighborGeneration<LifetimeEventNode<N, B, BoundSet<B>>> for BoundingCombinator<Space, B, N>
 where
     Space: PartialNeighborGeneration<N>+SearchSpace<N,B>,
     B: Ord+Copy+Into<i64>+Display

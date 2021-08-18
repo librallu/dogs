@@ -65,7 +65,7 @@ where
     Space: TotalNeighborGeneration<N> + SearchSpace<N, B> + DecisionSpace<N,Decision>,
     B: PartialOrd+Copy,
     Decision: std::hash::Hash+Eq,
-    Tenure: TabuTenure<Decision>,
+    Tenure: TabuTenure<N, Decision>,
     N: Clone,
 {
 
@@ -73,13 +73,13 @@ where
         // add the decision to the tabu list
         match self.s.decision(n) {
             None => {},
-            Some(d) => self.tenure.insert(d)
+            Some(d) => self.tenure.insert(n, d)
         }
         // remove neighbors that have their decision in the tabu tenure
         self.s.neighbors(n).iter().filter(|neigh| {
             match self.s.decision(neigh) {
                 None => true,
-                Some(d) => !self.tenure.contains(&d) || self.s.aspiration_criterion(n)
+                Some(d) => !self.tenure.contains(neigh, &d) || self.s.aspiration_criterion(n)
             }
         }).cloned().collect()
     }

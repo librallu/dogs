@@ -3,13 +3,13 @@ use std::hash::Hash;
 use fxhash::FxHashSet;
 
 /** defines the behavior of a tabu tenure component. */
-pub trait TabuTenure<Decision:Hash+Eq> {
+pub trait TabuTenure<Node, Decision:Hash+Eq> {
 
-    /** insert a decision to the tabu list */
-    fn insert(&mut self, d:Decision);
+    /** insert a decision d to the tabu list (and given the resulting node n) */
+    fn insert(&mut self, n:&Node, d:Decision);
 
-    /** true iff the tabu tenure contains the decision */
-    fn contains(&self, d:&Decision) -> bool;
+    /** true iff the tabu tenure contains the decision (and given the resulting node n) */
+    fn contains(&self, n:&Node, d:&Decision) -> bool;
 }
 
 /** tabu tenure that maintains every decision taken so far (no forgetting). */
@@ -18,12 +18,12 @@ pub struct FullTabuTenure<Decision> {
     decisions:FxHashSet<Decision>,
 }
 
-impl<Decision:Hash+Eq> TabuTenure<Decision> for FullTabuTenure<Decision> {
-    fn insert(&mut self, d:Decision) {
+impl<Node, Decision:Hash+Eq> TabuTenure<Node, Decision> for FullTabuTenure<Decision> {
+    fn insert(&mut self, _n:&Node, d:Decision) {
         self.decisions.insert(d);
     }
 
-    fn contains(&self, d:&Decision) -> bool {
+    fn contains(&self, _n:&Node, d:&Decision) -> bool {
         self.decisions.contains(d)
     }
 }

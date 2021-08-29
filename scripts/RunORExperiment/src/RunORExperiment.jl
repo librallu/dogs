@@ -36,20 +36,20 @@ function main()
     PerformExperiment.tsp_check()
     println(YELLOW_FG("GENRATING EXPERIMENTS..."))
     ### read command line
-    # parsed_args = parse_commandline()
+    parsed_args = parse_commandline()
     ### debug comment (otherwise JIT compilation is way too slow!)
-    parsed_args = Dict(
-        # "configuration" => "../examples/test_flowtime.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
-        # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
-        "configuration" => "../../../dogs-pfsp/experiments/vfr_large_makespan.experiment.json",
-        "debug" => true,
-        # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
-        # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
-        "analysis_only" => "../../../dogs-pfsp/experiments/vfr_large_makespan_2021_07_29/"
-        # "fallback_run" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
-        # "fallback_run" => nothing
-    )
+    # parsed_args = Dict(
+    #     # "configuration" => "../examples/test_flowtime.json",
+    #     # "configuration" => "../../../dogs-pfsp/experiments/flowtime.experiment.json",
+    #     # "configuration" => "../../../dogs-pfsp/experiments/taillard_makespan.experiment.json",
+    #     "configuration" => "../../../dogs-pfsp/experiments/vfr_large_makespan.experiment.json",
+    #     "debug" => true,
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/flowtime_2021_07_27/"
+    #     # "analysis_only" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/",
+    #     "analysis_only" => "../../../dogs-pfsp/experiments/vfr_large_makespan_2021_07_29/"
+    #     # "fallback_run" => "../../../dogs-pfsp/experiments/taillard_makespan_2021_07_29/"
+    #     # "fallback_run" => nothing
+    # )
     ###
     configuration_filename = abspath(parsed_args["configuration"])
     is_debug = parsed_args["debug"]
@@ -94,6 +94,7 @@ function main()
     )
     # run each experiment if not analysis only
     if analysis_only === nothing && fallback_run === nothing
+        println(YELLOW_FG("NOT IN ANALYSIS ONLY, RUNNING EXPERIMENTS"))
         for experiment_id in keys(solver_variant_with_instance)
             command = solver_variant_with_instance[experiment_id]["command"]
             if is_debug
@@ -132,6 +133,10 @@ function main()
             end
         end
     end
+    # when the solvers finished, generate analysis
+    println(YELLOW_FG("WAITING FOR THE SOLVERS TO FINISH..."))
+    PerformExperiment.tsp_wait()
+    println(YELLOW_FG("GENERATING ANALYSIS..."))
     # read output files and populate solver_variant_with_instance
     for k in keys(solver_variant_with_instance)
         solver_variant_with_instance[k]["stats"] = PerformExperiment.read_performance_stats(solver_variant_with_instance[k]["output_file_prefix"]*".stats.json")

@@ -62,7 +62,7 @@ debug = true
 ```
 5. ```cargo flamegraph ARGUMENTS```. For instance (SOP): ```cargo flamegraph insts/R.700.1000.15.sop 30```
 6. Visualize the flamegraph (here by using Firefox): ```firefox flamegraph.svg```.
-
+7. Possibly, use [hotspot](https://github.com/KDAB/hotspot/) for the visualization
 
 
 ### Heap profiling (Linux)

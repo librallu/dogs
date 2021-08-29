@@ -9,7 +9,7 @@ pub trait TabuTenure<Node, Decision:Hash+Eq> {
     fn insert(&mut self, n:&Node, d:Decision);
 
     /** true iff the tabu tenure contains the decision (and given the resulting node n) */
-    fn contains(&self, n:&Node, d:&Decision) -> bool;
+    fn contains(&mut self, n:&Node, d:&Decision) -> bool;
 }
 
 /** tabu tenure that maintains every decision taken so far (no forgetting). */
@@ -23,7 +23,7 @@ impl<Node, Decision:Hash+Eq> TabuTenure<Node, Decision> for FullTabuTenure<Decis
         self.decisions.insert(d);
     }
 
-    fn contains(&self, _n:&Node, d:&Decision) -> bool {
+    fn contains(&mut self, _n:&Node, d:&Decision) -> bool {
         self.decisions.contains(d)
     }
 }

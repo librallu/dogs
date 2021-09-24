@@ -46,9 +46,7 @@ impl SparseSet {
         self.n
     }
 
-    /**
-    returns the nth element of the set
-    */
+    /** returns the nth element of the set */
     pub fn nth(&self, i:usize) -> usize {
         debug_assert!(i<self.n);
         self.dense[i]
@@ -59,13 +57,16 @@ impl SparseSet {
         self.sparse[e] < self.n
     }
 
-    /** inserts e into the set */
-    pub fn insert(&mut self, e:usize) {
-        debug_assert!(!self.contains(e));
+    /** inserts e into the set. Returns true iff the element was missing and successfully inserted */
+    pub fn insert(&mut self, e:usize) -> bool {
         debug_assert!(e < self.nb_max);
-        self.sparse[e] = self.n;
-        self.dense[self.n] = e;
-        self.n += 1;
+        if !self.contains(e) {
+            self.sparse[e] = self.n;
+            self.dense[self.n] = e;
+            self.n += 1;
+            return true;
+        }
+        false
     }
 
     /** removes e from the set */
@@ -86,6 +87,37 @@ impl SparseSet {
         self.dense[0] = e;
         self.sparse[e] = 0;
         self.n = 1;
+    }
+
+    /** returns an iterator */
+    pub fn iter(&'_ self) -> SparseSetIterator<'_> {
+        SparseSetIterator::new(self)
+    }
+}
+
+/** Sparse set iterator */
+#[derive(Debug)]
+pub struct SparseSetIterator<'a> {
+    set: &'a SparseSet,
+    index: usize,
+}
+
+impl<'a> SparseSetIterator<'a> {
+    fn new(set: &'a SparseSet) -> Self {
+        Self { set, index:0 }
+    }
+}
+
+impl<'a> Iterator for SparseSetIterator<'a> {
+    type Item = usize;
+    fn next(&mut self) -> Option<usize> {
+        if self.index < self.set.len() {
+            let res = self.set.dense[self.index];
+            self.index += 1;
+            Some(res)
+        } else {
+            None
+        }
     }
 }
 

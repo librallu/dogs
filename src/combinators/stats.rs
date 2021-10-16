@@ -55,7 +55,8 @@ pub struct StatTsCombinator<Space, B> {
     nb_sols: u64,
     perfprofile: Vec<PerfProfileEntry<B>>,
     logger: Weak<MetricLogger>,
-    logging_id_nbnodes: Option<usize>,
+    logging_id_nbexpanded: Option<usize>,
+    logging_id_nbgenerated: Option<usize>,
     logging_id_obj: Option<usize>,
 }
 
@@ -239,7 +240,13 @@ where
         }
         // updates logger and display statistics
         if let Some(logger) = self.logger.upgrade() {
-            if let Some(id) = self.logging_id_nbnodes {
+            if let Some(id) = self.logging_id_nbexpanded {
+                logger.update_metric(
+                    id,
+                    Metric::LargeNumber(self.stats.expanded as f64)
+                );
+            }
+            if let Some(id) = self.logging_id_nbgenerated {
                 logger.update_metric(
                     id,
                     Metric::LargeNumber(self.stats.generated as f64)
@@ -263,7 +270,7 @@ where
             Some(_) => { self.stats.generated += 1; }
         }
         if let Some(logger) = self.logger.upgrade() {
-            if let Some(id) = self.logging_id_nbnodes {
+            if let Some(id) = self.logging_id_nbgenerated {
                 logger.update_metric(
                     id, Metric::LargeNumber(self.stats.generated as f64)
                 );
@@ -296,7 +303,8 @@ impl<Space, B:Serialize+Copy+Display> StatTsCombinator<Space, B> {
             nb_sols: 0,
             perfprofile: Vec::new(),
             logger: Weak::new(),
-            logging_id_nbnodes: None,
+            logging_id_nbexpanded: None,
+            logging_id_nbgenerated: None,
             logging_id_obj: None,
         }
     }
@@ -306,11 +314,13 @@ impl<Space, B:Serialize+Copy+Display> StatTsCombinator<Space, B> {
         if let Some(logger) = logger_ref.upgrade() {
             // adds headers to the logger
             let tmp = logger.register_headers([
-                format!("{:<15}","nb nodes"),
+                format!("{:<15}","nb expanded"),
+                format!("{:<15}","nb generated"),
                 format!("{:<15}","objective"),
             ].to_vec());
-            self.logging_id_nbnodes = Some(tmp[0]);
-            self.logging_id_obj = Some(tmp[1]);
+            self.logging_id_nbexpanded = Some(tmp[0]);
+            self.logging_id_nbgenerated = Some(tmp[1]);
+            self.logging_id_obj = Some(tmp[2]);
         }
         // registers the logger
         self.logger = logger_ref;

@@ -7,6 +7,9 @@ pub mod gcost_dominance;
 /** provides various search statistics */
 pub mod stats;
 
+/// records some node features (bound, guide, depth, goal)
+pub mod node_features;
+
 /** implements limited discrepancy search based algorithms */
 pub mod lds;
 

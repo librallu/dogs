@@ -28,11 +28,19 @@ See [this thesis](https://www.researchgate.net/publication/346063021_Anytime_tre
 
 ### Roadmap: What's next?
 
+core:
+- [ ] refactor neighbors with an iterator
+
+combinators:
+- [ ] combinator that stores node information (bound, guide, depth)
+- [ ] StatsCombinator, mark opened nodes (better accuracy)
+
+local search:
 - [ ] Reactive tabu management
+
+tree search:
 - [ ] Possible bug in "is_optimal" if the time limit is exceeded before the search makes some
       heuristic fathoming. In this case, the algorithm will report "optimal" while it is not.
-- [ ] Add Decorator trait and base implementation for unwrap()
-- [ ] improve LazyComputable usage (trait?)
 
 
 ## examples
